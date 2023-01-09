@@ -1,0 +1,14 @@
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Debug\net6.0\BreezeConnect.deps.json
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Debug\net6.0\BreezeConnect.dll
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Debug\net6.0\BreezeConnect.pdb
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Debug\net6.0\BreezeConnect.xml
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.csproj.AssemblyReference.cache
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.AssemblyInfoInputs.cache
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.AssemblyInfo.cs
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.csproj.CoreCompileInputs.cache
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.dll
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\refint\BreezeConnect.dll
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.xml
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\BreezeConnect.pdb
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Debug\net6.0\ref\BreezeConnect.dll

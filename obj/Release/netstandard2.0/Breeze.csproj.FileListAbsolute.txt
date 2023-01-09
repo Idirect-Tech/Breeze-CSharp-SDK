@@ -1,0 +1,24 @@
+D:\Sarang Office\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.deps.json
+D:\Sarang Office\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.dll
+D:\Sarang Office\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.pdb
+D:\Sarang Office\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.xml
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.csproj.AssemblyReference.cache
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.GeneratedMSBuildEditorConfig.editorconfig
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.AssemblyInfoInputs.cache
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.AssemblyInfo.cs
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.csproj.CoreCompileInputs.cache
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.dll
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.xml
+D:\Sarang Office\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.pdb
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.deps.json
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.dll
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.pdb
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\bin\Release\netstandard2.0\Breeze.xml
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.csproj.AssemblyReference.cache
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.AssemblyInfoInputs.cache
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.AssemblyInfo.cs
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.csproj.CoreCompileInputs.cache
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.dll
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.xml
+C:\Users\SHRIKANT\Desktop\ISEC-CODE\isec-api-sdk\C#\Breeze\obj\Release\netstandard2.0\Breeze.pdb
