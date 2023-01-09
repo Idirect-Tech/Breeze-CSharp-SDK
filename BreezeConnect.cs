@@ -51,7 +51,7 @@ namespace Breeze
             }
 
             var response = request.GetResponse();
-            //JsonSerializer.Deserialize<Dictionary<string, object>>(request.GetResponse().ToString()).TryGetValue("session_token", out object sessionTokenObject);
+           
 
             var responseStream = response.GetResponseStream();
             string sessionTokenObject = "";
@@ -65,7 +65,7 @@ namespace Breeze
 
                     foreach (var e in json)
                     {
-                        //Console.WriteLine(e.Value["session_token"]);
+                        
                         sessionTokenObject = (string)e.Value["session_token"];
                         break;
                     }
@@ -115,7 +115,7 @@ namespace Breeze
                     _socketHandlerOrder.setSession(userId: decodedString.Split(separator: ':')[0], sessionToken: decodedString.Split(separator: ':')[1], tokenScriptDictList: getStockScriptList(), debug: debug, apiKey: _apiKey);
                 }
             }
-        } //Need to handle exception
+        } 
 
 
         public void generateSessionAsPerVersion(string secretKey, string sessionToken, bool debug = false)
@@ -1409,7 +1409,6 @@ namespace Breeze
             switch (exchange)
             {
                 case "nse":
-                    //Console.WriteLine("idar aaye");
                     url = new Uri("https://traderweb.icicidirect.com/Content/File/txtFile/ScripFile/NSEScripMaster.txt");
                     break;
                 case "bse":
@@ -1436,9 +1435,9 @@ namespace Breeze
 
                         while ((line = reader.ReadLine()) != null)
                         {
-                            //Console.WriteLine(line);
+                            
                             string[] words = line.Split(',');
-                            //Console.WriteLine(words[1].Length);
+                            
                             string shortName = words[1].Substring(1);
                             shortName = shortName.Substring(0, shortName.Length - 1);
 
@@ -1737,7 +1736,7 @@ namespace Breeze
             {
                 _socketOrder = new SocketIO(_hostnameOrder, initiateSocketIOOptions());
                 await _socketOrder.ConnectAsync();
-                // Console.WriteLine("Connection done.........");
+                
                 if (_socketOrder.Disconnected)
                 {
                     int count = 0;
