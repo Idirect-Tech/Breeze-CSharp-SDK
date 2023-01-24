@@ -51,7 +51,7 @@ namespace Breeze
             }
 
             var response = request.GetResponse();
-           
+            //JsonSerializer.Deserialize<Dictionary<string, object>>(request.GetResponse().ToString()).TryGetValue("session_token", out object sessionTokenObject);
 
             var responseStream = response.GetResponseStream();
             string sessionTokenObject = "";
@@ -65,7 +65,7 @@ namespace Breeze
 
                     foreach (var e in json)
                     {
-                        
+                        //Console.WriteLine(e.Value["session_token"]);
                         sessionTokenObject = (string)e.Value["session_token"];
                         break;
                     }
@@ -115,16 +115,16 @@ namespace Breeze
                     _socketHandlerOrder.setSession(userId: decodedString.Split(separator: ':')[0], sessionToken: decodedString.Split(separator: ':')[1], tokenScriptDictList: getStockScriptList(), debug: debug, apiKey: _apiKey);
                 }
             }
-        } 
+        } //Need to handle exception
 
 
         public void generateSessionAsPerVersion(string secretKey, string sessionToken, bool debug = false)
         {
-                #if NET472_OR_GREATER
+#if NET472_OR_GREATER
                         this.generateSessionUsingHttpHandler(secretKey, sessionToken);
-                #else
-                        this.generateSession(secretKey, sessionToken);
-                #endif
+#else
+            this.generateSession(secretKey, sessionToken);
+#endif
 
         }
         private Dictionary<string, string[]>[] getStockScriptList()
@@ -493,6 +493,8 @@ namespace Breeze
                         callback(data);
                     }
                 });
+
+                //return;
             }
         }
 
@@ -503,7 +505,7 @@ namespace Breeze
         public Dictionary<string, object> getHistoricalData(string interval, string fromDate, string toDate, string stockCode, string exchangeCode, string productType = "", string expiryDate = "", string right = "", string strikePrice = "") { return _apiHandler.getHistoricalData(interval, fromDate, toDate, stockCode, exchangeCode, productType, expiryDate, right, strikePrice); }
         public Dictionary<string, object> addMargin(string exchangeCode, string productType, string stockCode, string coverQuantity, string settlementId, string addAmount, string marginAmount, string openQuantity, string categoryIndexPerStock, string expiryDate, string right, string contractTag, string strikePrice, string segmentCode) { return _apiHandler.addMargin(exchangeCode, productType, stockCode, coverQuantity, settlementId, addAmount, marginAmount, openQuantity, categoryIndexPerStock, expiryDate, right, contractTag, strikePrice, segmentCode); }
         public Dictionary<string, object> getMargin(string exchangeCode) { return _apiHandler.getMargin(exchangeCode); }
-        public Dictionary<string, object> placeOrder(string stockCode, string exchangeCode, string productType, string action, string orderType, string stoploss, string quantity, string price, string validity, string validityDate, string disclosedQuantity, string expiryDate, string right, string strikePrice, string userRemark,string orderTypeFresh, string orderRateFresh) { return _apiHandler.placeOrder(stockCode, exchangeCode, productType, action, orderType, stoploss, quantity, price, validity, validityDate, disclosedQuantity, expiryDate, right, strikePrice, userRemark, orderTypeFresh, orderRateFresh); }
+        public Dictionary<string, object> placeOrder(string stockCode, string exchangeCode, string productType, string action, string orderType, string stoploss, string quantity, string price, string validity, string validityDate, string disclosedQuantity, string expiryDate, string right, string strikePrice, string userRemark, string orderTypeFresh, string orderRateFresh) { return _apiHandler.placeOrder(stockCode, exchangeCode, productType, action, orderType, stoploss, quantity, price, validity, validityDate, disclosedQuantity, expiryDate, right, strikePrice, userRemark, orderTypeFresh, orderRateFresh); }
         public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId) { return _apiHandler.getOrderDetail(exchangeCode, orderId); }
         public Dictionary<string, object> getOrderList(string exchangeCode, string fromDate, string toDate) { return _apiHandler.getOrderList(exchangeCode, fromDate, toDate); }
         public Dictionary<string, object> cancelOrder(string exchangeCode, string orderId) { return _apiHandler.cancelOrder(exchangeCode, orderId); }
@@ -519,6 +521,8 @@ namespace Breeze
         public Dictionary<string, object> getTradeDetail(string exchangeCode, string orderId) { return _apiHandler.getTradeDetail(exchangeCode, orderId); }
 
         public Dictionary<string, object> getNames(string exchange, string stockCode) { return _apiHandler.getNames(exchange, stockCode); }
+
+        public Dictionary<string, object> previewOrder(string stockCode, string exchangeCode, string productType, string orderType, string price, string action, string quantity, string expiryDate, string right, string strikePrice, string specialFlag, string stoploss, string orderRateFresh) { return _apiHandler.previewOrder(stockCode, exchangeCode, productType, orderType, price, action, quantity, expiryDate, right, strikePrice, specialFlag, stoploss, orderRateFresh); }
     }
 
     public class ApificationBreeze
@@ -982,7 +986,7 @@ namespace Breeze
                 requestBody.Add("user_remark", userRemark);
             if (!string.IsNullOrEmpty(orderTypeFresh))
                 requestBody.Add("order_type_fresh", orderTypeFresh);
-            if(!string.IsNullOrEmpty(orderRateFresh))
+            if (!string.IsNullOrEmpty(orderRateFresh))
                 requestBody.Add("order_rate_fresh", orderRateFresh);
             var response = makeRequest("POST", "order", requestBody);
             return response;
@@ -1372,6 +1376,65 @@ namespace Breeze
             return response;
         }
 
+        public Dictionary<string, object> previewOrder(string stockCode, string exchangeCode, string productType, string orderType, string price, string action, string quantity, string expiryDate, string right, string strikePrice, string specialFlag, string stoploss, string orderRateFresh)
+        {
+            if (string.IsNullOrEmpty(exchangeCode))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "exchangeCode cannot be empty" }
+                };
+
+            if (string.IsNullOrEmpty(stockCode))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "stockCode cannot be empty" }
+                };
+
+            if (string.IsNullOrEmpty(productType))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "productType cannot be empty" }
+                };
+
+            if (string.IsNullOrEmpty(orderType))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "orderType cannot be empty" }
+                };
+
+            if (string.IsNullOrEmpty(action))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "action cannot be empty" }
+                };
+
+            var requestBody = new Dictionary<string, object> {
+                
+                {"stock_code", stockCode},
+                {"exchange_code",exchangeCode},
+                {"product",productType },
+                {"order_type",orderType},
+                { "price",price},
+                {"action",action},
+                {"quantity",quantity },
+                {"expiry_date",expiryDate},
+                {"right", right},
+                {"strike_price",strikePrice},
+                {"specialflag", specialFlag},
+                {"stoploss", stoploss },
+                {"order_rate_fresh",orderRateFresh }
+            };
+
+            var response = makeRequest("GET", "preview_order", requestBody);
+            return response;
+
+
+        }
         public Dictionary<string, object> getTradeDetail(string exchangeCode, string orderId)
         {
             if (string.IsNullOrEmpty(exchangeCode))
@@ -1409,6 +1472,7 @@ namespace Breeze
             switch (exchange)
             {
                 case "nse":
+                    //Console.WriteLine("idar aaye");
                     url = new Uri("https://traderweb.icicidirect.com/Content/File/txtFile/ScripFile/NSEScripMaster.txt");
                     break;
                 case "bse":
@@ -1435,9 +1499,9 @@ namespace Breeze
 
                         while ((line = reader.ReadLine()) != null)
                         {
-                            
+                            //Console.WriteLine(line);
                             string[] words = line.Split(',');
-                            
+                            //Console.WriteLine(words[1].Length);
                             string shortName = words[1].Substring(1);
                             shortName = shortName.Substring(0, shortName.Length - 1);
 
@@ -1736,7 +1800,7 @@ namespace Breeze
             {
                 _socketOrder = new SocketIO(_hostnameOrder, initiateSocketIOOptions());
                 await _socketOrder.ConnectAsync();
-                
+                // Console.WriteLine("Connection done.........");
                 if (_socketOrder.Disconnected)
                 {
                     int count = 0;

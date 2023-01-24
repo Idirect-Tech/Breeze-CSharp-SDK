@@ -202,6 +202,9 @@ namespace ConsoleAppTestProject
                 // Get Names for NSE codes
                 Console.WriteLine(JsonSerializer.Serialize(breeze.getNames(exchange : "NSE", stockCode : "RELIANCE")));
                 // Note: Use this method to find ICICI specific stock codes / token
+
+                // preview order sdk
+                 Console.WriteLine(JsonSerializer.Serialize(breeze.previewOrder(stockCode:"ICIBAN",exchangeCode:"NSE",productType:"margin",orderType :"limit", price:"907.05", action:"buy", quantity:"1", expiryDate:"", right:"", strikePrice:"", specialFlag:"N", stoploss:"", orderRateFresh:"")));
             }
             catch (Exception ex)
             {
