@@ -1229,7 +1229,7 @@ namespace Breeze
                     { "Status", 500},
                     { "Error", "Product-Type cannot be empty for Exchange-Code value as 'nfo'." }
                 };
-            else if (productType.ToLower() != "futures" || productType.ToLower() != "options")
+            else if (productType.ToLower() != "futures" && productType.ToLower() != "options")
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
