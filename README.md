@@ -52,6 +52,19 @@ namespace ConsoleAppTestProject
 
                 // Unsubscribe stocks feeds by stock-token
                 Console.WriteLine(JsonSerializer.Serialize(await breeze.unsubscribeFeedsAsync("4.1!49937")));
+
+                // subscribe to oneclick strategy
+                Console.WriteLine(JsonSerializer.Serialize(await breeze.subscribeFeedsAsync("one_click_fno",true)));
+
+                // unsubscribe to oneclick strategy
+                Console.WriteLine(JsonSerializer.Serialize(await breeze.unsubscribeFeedsAsync("one_click_fno",true)));
+
+                // subscribe to ohlc streaming
+                Console.WriteLine(JsonSerializer.Serialize(await breeze.subscribeFeedsAsync("1.1!SENSEX","1second")));
+
+                // unsubscribe to ohlc streaming
+                Console.WriteLine(JsonSerializer.Serialize(await breeze.unsubscribeFeedsAsync("1.1!SENSEX","1second")));
+
             }
             catch (Exception ex)
             {

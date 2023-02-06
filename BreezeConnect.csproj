@@ -5,7 +5,7 @@
     <Authors>ICICIDIRECT</Authors>
     <Company>ICICI Securities Limited</Company>
     <PackageId>com.breeze.breezeconnect</PackageId>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <FileVersion>1.0.0</FileVersion>
     <Description>The official .Net client for communicating with BreezeConnect API and Websocket.</Description>
