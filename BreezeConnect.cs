@@ -12,6 +12,7 @@ using System.Reflection;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using System.Globalization;
 
 namespace Breeze
 {
@@ -560,7 +561,9 @@ namespace Breeze
 
         private static string currentTimestamp()
         {
-            return DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.000Z");
+            // Adding invariant culture to resolve issue with c# api calls
+            // without globalization datetime is converted to 2023-05-22T15.45.48.000Z due to this api call returns 401 error
+            return DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.000Z", CultureInfo.InvariantCulture);
         }
 
         private RestRequest prepRequestHeader(Dictionary<string, object> body, RestRequest request)
