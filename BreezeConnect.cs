@@ -1125,6 +1125,7 @@ namespace Breeze
                 "list_of_positions":listOfPositions,
                 "exchange_code" : exchangeCode
             });
+            return response;
 
         }
 
