@@ -629,6 +629,10 @@ namespace Breeze
         public Dictionary<string, object> getMargin(string exchangeCode) { return _apiHandler.getMargin(exchangeCode); }
         public Dictionary<string, object> placeOrder(string stockCode, string exchangeCode, string productType, string action, string orderType, string stoploss, string quantity, string price, string validity, string validityDate, string disclosedQuantity, string expiryDate, string right, string strikePrice, string userRemark, string orderTypeFresh, string orderRateFresh) { return _apiHandler.placeOrder(stockCode, exchangeCode, productType, action, orderType, stoploss, quantity, price, validity, validityDate, disclosedQuantity, expiryDate, right, strikePrice, userRemark, orderTypeFresh, orderRateFresh); }
         public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId) { return _apiHandler.getOrderDetail(exchangeCode, orderId); }
+        //public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId) { return _apiHandler.getOrderDetail(exchangeCode, orderId); }
+        public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit){
+            return _apiHandler.limitCalculator(strikePrice,  productType, expiryDate, underlying, exchangeCode, orderFlow, stopLossTrigger, optionType, sourceFlag, limitRate, orderReference, availableQuantity, marketType,freshOrderLimit)
+        }
         public Dictionary<string, object> getOrderList(string exchangeCode, string fromDate, string toDate) { return _apiHandler.getOrderList(exchangeCode, fromDate, toDate); }
         public Dictionary<string, object> cancelOrder(string exchangeCode, string orderId) { return _apiHandler.cancelOrder(exchangeCode, orderId); }
         public Dictionary<string, object> modifyOrder(string orderId, string exchangeCode, string orderType, string stoploss, string quantity, string price, string validity, string disclosedQuantity, string validityDate) { return _apiHandler.modifyOrder(orderId, exchangeCode, orderType, stoploss, quantity, price, validity, disclosedQuantity, validityDate); }
@@ -1111,6 +1115,118 @@ namespace Breeze
             if (!string.IsNullOrEmpty(orderRateFresh))
                 requestBody.Add("order_rate_fresh", orderRateFresh);
             var response = makeRequest("POST", "order", requestBody);
+            return response;
+        }
+
+        public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit)
+        {
+            if (string.IsNullOrEmpty(exchangeCode))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "exchangeCode cannot be empty" }
+                }; 
+            else if (string.IsNullOrEmpty(strikePrice))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "strikePrice cannot be empty" }
+                }; 
+
+            else if (string.IsNullOrEmpty(productType))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "productType cannot be empty" }
+                }; 
+
+            else if (string.IsNullOrEmpty(orderFlow))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "orderFlow cannot be empty" }
+                }; 
+
+            else if (string.IsNullOrEmpty(stopLossTrigger))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "stopLossTrigger cannot be empty" }
+                }; 
+
+            else if (string.IsNullOrEmpty(optionType))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "optionType cannot be empty" }
+                }; 
+
+            else if (string.IsNullOrEmpty(sourceFlag))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "sourceFlag cannot be empty" }
+                }; 
+            else if (string.IsNullOrEmpty(limitRate))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "limitRate cannot be empty" }
+                };   
+            
+            else if (string.IsNullOrEmpty(orderReference))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "orderReference cannot be empty" }
+                };   
+            
+            else if (string.IsNullOrEmpty(availableQuantity))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "availableQuantity cannot be empty" }
+                };  
+
+            else if (string.IsNullOrEmpty(marketType))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "marketType cannot be empty" }
+                };  
+
+            else if(string.IsNullOrEmpty(freshOrderLimit))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "freshOrderLimit cannot be empty" }
+                };  
+
+            else if(string.IsNullOrEmpty(underlying))
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "underlying cannot be empty" }
+                };  
+
+            var response = makeRequest("POST", "fnolmtpriceandqtycal", new Dictionary<string, object>() 
+            {                                                                                  
+                "strike_price": strikePrice,                                    
+                "product_type":productType,                 
+                "expiry_date": expiryDate,
+                "underlying" : underlying,
+                "exchange_code":exchangeCode,
+                "order_flow" :orderFlow,
+                "stop_loss_trigger":stopLossTrigger,
+                "option_type":optionType,
+                "source_flag" : sourceFlag,
+                "limit_rate" : limitRate,
+                "order_reference": orderReference,
+                "available_quantity":availableQuantity,
+                "market_type": marketType,
+                "fresh_order_limit":freshOrderLimit
+            });
+
             return response;
         }
 
