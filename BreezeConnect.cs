@@ -1763,7 +1763,7 @@ namespace Breeze
                 socketIOOptions.Auth = new Dictionary<string, string> { { "user", _userId }, { "token", _sessionToken }, };
                 socketIOOptions.ConnectionTimeout = TimeSpan.FromSeconds(10);
                 socketIOOptions.Reconnection = true;
-                //socketIOOptions.ReconnectionAttempts = 10;
+                socketIOOptions.ReconnectionAttempts = 10;
                 socketIOOptions.Transport = SocketIOClient.Transport.TransportProtocol.WebSocket;
                 socketIOOptions.ExtraHeaders = new Dictionary<string, string> { { "User_Agent", "dotnet-socketio[client]/socket" } };
                 return socketIOOptions;
