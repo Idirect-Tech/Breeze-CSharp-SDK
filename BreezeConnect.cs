@@ -1118,6 +1118,16 @@ namespace Breeze
             return response;
         }
 
+        public Dictionary<string, object> marginCalculator(var listOfPositions,string exchangeCode)
+        {
+            var response = makeRequest("POST", "margincalculator", new Dictionary<string, object>() 
+            {                                                                                  
+                "list_of_positions":listOfPositions,
+                "exchange_code" : exchangeCode
+            });
+
+        }
+
         public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit)
         {
             if (string.IsNullOrEmpty(exchangeCode))
@@ -1368,6 +1378,7 @@ namespace Breeze
                 requestBody.Add("disclosed_quantity", disclosedQuantity);
             if (!string.IsNullOrEmpty(validityDate))
                 requestBody.Add("validity_date", validityDate);
+
             var response = makeRequest("PUT", "order", requestBody);
             return response;
         }
