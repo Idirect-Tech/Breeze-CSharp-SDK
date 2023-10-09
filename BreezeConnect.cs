@@ -633,6 +633,9 @@ namespace Breeze
         public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit){
             return _apiHandler.limitCalculator(strikePrice,  productType, expiryDate, underlying, exchangeCode, orderFlow, stopLossTrigger, optionType, sourceFlag, limitRate, orderReference, availableQuantity, marketType,freshOrderLimit)
         }
+        public Dictionary<string, object> marginCalculator(var listOfPositions,string exchangeCode){
+            return _apiHandler.marginCalculator(listOfPositions, exchangeCode)
+        }
         public Dictionary<string, object> getOrderList(string exchangeCode, string fromDate, string toDate) { return _apiHandler.getOrderList(exchangeCode, fromDate, toDate); }
         public Dictionary<string, object> cancelOrder(string exchangeCode, string orderId) { return _apiHandler.cancelOrder(exchangeCode, orderId); }
         public Dictionary<string, object> modifyOrder(string orderId, string exchangeCode, string orderType, string stoploss, string quantity, string price, string validity, string disclosedQuantity, string validityDate) { return _apiHandler.modifyOrder(orderId, exchangeCode, orderType, stoploss, quantity, price, validity, disclosedQuantity, validityDate); }
@@ -1126,8 +1129,9 @@ namespace Breeze
                 "exchange_code" : exchangeCode
             });
             return response;
-
         }
+
+
 
         public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit)
         {
