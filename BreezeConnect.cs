@@ -240,7 +240,7 @@ namespace Breeze
                     { "Status" , 500 },
                     { "Error" , "Session not generated. Please generate session." },
                 };
-            else if (_socketHandlerOhlcv.isConnected(false, true))
+            else if (_socketHandlerOhlcv.isConnected(false,true))
                 return new Dictionary<string, object>() {
                     {"Success",null},
                     {"Status",500},
@@ -248,7 +248,7 @@ namespace Breeze
                 };
             else
             {
-                if (_socketHandlerOhlcv.isConnected(false, true))
+                if (_socketHandlerOhlcv.isConnected(false,true))
                     return new Dictionary<string, object>() {
                         {"Success","Socket connection for ohlc streaming established."},
                         {"Status",200},
@@ -300,7 +300,7 @@ namespace Breeze
             }
         }
 
-        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken, bool isStrategy = false)
+        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken,bool isStrategy = false)
         {
             if (stockToken is null || stockToken.Length == 0)
                 return new Dictionary<string, object>() {
@@ -308,7 +308,7 @@ namespace Breeze
                     { "Status", 500 },
                     { "Error", "Stock-Token cannot be empty" }
                 };
-            if (!isStrategy)
+            if(!isStrategy)
                 await _socketHandler.watch(new string[] { stockToken });
             else
                 await _socketHandlerOrder.watchStrategy(stockToken);
@@ -319,10 +319,10 @@ namespace Breeze
             };
         }
 
-        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken, string channel)
+        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken,string channel)
         {
-
-            await _socketHandlerOhlcv.watchOhlcv(stockToken, channel);
+            
+            await _socketHandlerOhlcv.watchOhlcv(stockToken,channel);
             return new Dictionary<string, object>() {
                 { "Success", "Stock " + stockToken + " subscribed successfully" },
                 { "Status", 200 },
@@ -330,7 +330,7 @@ namespace Breeze
             };
         }
 
-        public async Task<Dictionary<string, object>> subscribeFeedsAsync(bool getOrderNotification = false)
+        public async  Task<Dictionary<string, object>> subscribeFeedsAsync(bool getOrderNotification = false)
         {
             if (!getOrderNotification)
                 return new Dictionary<string, object>() {
@@ -388,7 +388,7 @@ namespace Breeze
             };
         }
 
-        public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string stockToken, bool isStrategy = false)
+        public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string stockToken,bool isStrategy = false)
         {
             if (stockToken is null || stockToken.Length == 0)
                 return new Dictionary<string, object>() {
@@ -532,12 +532,12 @@ namespace Breeze
         {
             while (true)
             {
-                if (_socket.Disconnected)
+                if(_socket.Disconnected)
                 {
                     wsConnectAsync();
                     Console.WriteLine("reconnection established");
                     _socketHandler.rewatch();
-
+                    
                 }
 
                 if (_socket is null)
@@ -559,7 +559,7 @@ namespace Breeze
 
                 if (_socketOhlcv is null)
                 {
-                    _socketOhlcv = _socketHandlerOhlcv.GetSocketIO(false, true);
+                    _socketOhlcv = _socketHandlerOhlcv.GetSocketIO(false,true);
                     if (_socketOhlcv is null)
                         throw new Exception("Socket not connected. Cannot return any ticks for ohlcv streaming");
                     else if (!_socketOhlcv.Connected)
@@ -572,7 +572,7 @@ namespace Breeze
                     callback(data);
                 });
 
-                _socketOrder.On("stock", response =>
+                _socketOhlcv.On("stock", response =>
                 {
                     object data = _socketHandler.parseStrategy(response.GetValue());
                     callback(data);
@@ -629,13 +629,6 @@ namespace Breeze
         public Dictionary<string, object> getMargin(string exchangeCode) { return _apiHandler.getMargin(exchangeCode); }
         public Dictionary<string, object> placeOrder(string stockCode, string exchangeCode, string productType, string action, string orderType, string stoploss, string quantity, string price, string validity, string validityDate, string disclosedQuantity, string expiryDate, string right, string strikePrice, string userRemark, string orderTypeFresh, string orderRateFresh) { return _apiHandler.placeOrder(stockCode, exchangeCode, productType, action, orderType, stoploss, quantity, price, validity, validityDate, disclosedQuantity, expiryDate, right, strikePrice, userRemark, orderTypeFresh, orderRateFresh); }
         public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId) { return _apiHandler.getOrderDetail(exchangeCode, orderId); }
-        //public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId) { return _apiHandler.getOrderDetail(exchangeCode, orderId); }
-        public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit){
-            return _apiHandler.limitCalculator(strikePrice,  productType, expiryDate, underlying, exchangeCode, orderFlow, stopLossTrigger, optionType, sourceFlag, limitRate, orderReference, availableQuantity, marketType,freshOrderLimit)
-        }
-        public Dictionary<string, object> marginCalculator(var listOfPositions,string exchangeCode){
-            return _apiHandler.marginCalculator(listOfPositions, exchangeCode)
-        }
         public Dictionary<string, object> getOrderList(string exchangeCode, string fromDate, string toDate) { return _apiHandler.getOrderList(exchangeCode, fromDate, toDate); }
         public Dictionary<string, object> cancelOrder(string exchangeCode, string orderId) { return _apiHandler.cancelOrder(exchangeCode, orderId); }
         public Dictionary<string, object> modifyOrder(string orderId, string exchangeCode, string orderType, string stoploss, string quantity, string price, string validity, string disclosedQuantity, string validityDate) { return _apiHandler.modifyOrder(orderId, exchangeCode, orderType, stoploss, quantity, price, validity, disclosedQuantity, validityDate); }
@@ -651,6 +644,14 @@ namespace Breeze
 
         public Dictionary<string, object> getNames(string exchange, string stockCode) { return _apiHandler.getNames(exchange, stockCode); }
 
+        public Dictionary<string, object> limitCalculator(string strikePrice, string productType, string expiryDate, string underlying, string exchangeCode, string orderFlow, string stopLossTrigger, string optionType, string sourceFlag, string limitRate, string orderReference, string availableQuantity, string marketType, string freshOrderLimit)
+        {
+            return _apiHandler.limitCalculator(strikePrice, productType, expiryDate, underlying, exchangeCode, orderFlow, stopLossTrigger, optionType, sourceFlag, limitRate, orderReference, availableQuantity, marketType, freshOrderLimit);
+        }
+        public Dictionary<string, object> marginCalculator(List<Dictionary<string, object>> listOfPositions, string exchangeCode)
+        {
+            return _apiHandler.marginCalculator(listOfPositions, exchangeCode);
+        }
         public Dictionary<string, object> previewOrder(string stockCode, string exchangeCode, string productType, string orderType, string price, string action, string quantity, string expiryDate, string right, string strikePrice, string specialFlag, string stoploss, string orderRateFresh) { return _apiHandler.previewOrder(stockCode, exchangeCode, productType, orderType, price, action, quantity, expiryDate, right, strikePrice, specialFlag, stoploss, orderRateFresh); }
     }
 
@@ -1121,131 +1122,130 @@ namespace Breeze
             return response;
         }
 
-        public Dictionary<string, object> marginCalculator(var listOfPositions,string exchangeCode)
-        {
-            var response = makeRequest("POST", "margincalculator", new Dictionary<string, object>() 
-            {                                                                                  
-                "list_of_positions":listOfPositions,
-                "exchange_code" : exchangeCode
-            });
-            return response;
-        }
-
-
-
-        public Dictionary<string, object> limitCalculator(string strikePrice, string productType,string expiryDate,string underlying,string exchangeCode,string orderFlow,string stopLossTrigger,string optionType,string sourceFlag,string limitRate,string orderReference,string availableQuantity,string marketType,string freshOrderLimit)
+        public Dictionary<string, object> limitCalculator(string strikePrice, string productType, string expiryDate, string underlying, string exchangeCode, string orderFlow, string stopLossTrigger, string optionType, string sourceFlag, string limitRate, string orderReference, string availableQuantity, string marketType, string freshOrderLimit)
         {
             if (string.IsNullOrEmpty(exchangeCode))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "exchangeCode cannot be empty" }
-                }; 
+                };
             else if (string.IsNullOrEmpty(strikePrice))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "strikePrice cannot be empty" }
-                }; 
+                };
 
             else if (string.IsNullOrEmpty(productType))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "productType cannot be empty" }
-                }; 
+                };
 
             else if (string.IsNullOrEmpty(orderFlow))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "orderFlow cannot be empty" }
-                }; 
+                };
 
             else if (string.IsNullOrEmpty(stopLossTrigger))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "stopLossTrigger cannot be empty" }
-                }; 
+                };
 
             else if (string.IsNullOrEmpty(optionType))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "optionType cannot be empty" }
-                }; 
+                };
 
             else if (string.IsNullOrEmpty(sourceFlag))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "sourceFlag cannot be empty" }
-                }; 
+                };
             else if (string.IsNullOrEmpty(limitRate))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "limitRate cannot be empty" }
-                };   
-            
+                };
+
             else if (string.IsNullOrEmpty(orderReference))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "orderReference cannot be empty" }
-                };   
-            
+                };
+
             else if (string.IsNullOrEmpty(availableQuantity))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "availableQuantity cannot be empty" }
-                };  
+                };
 
             else if (string.IsNullOrEmpty(marketType))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "marketType cannot be empty" }
-                };  
+                };
 
-            else if(string.IsNullOrEmpty(freshOrderLimit))
+            else if (string.IsNullOrEmpty(freshOrderLimit))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "freshOrderLimit cannot be empty" }
-                };  
+                };
 
-            else if(string.IsNullOrEmpty(underlying))
+            else if (string.IsNullOrEmpty(underlying))
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
                     { "Error", "underlying cannot be empty" }
-                };  
+                };
 
-            var response = makeRequest("POST", "fnolmtpriceandqtycal", new Dictionary<string, object>() 
-            {                                                                                  
-                "strike_price": strikePrice,                                    
-                "product_type":productType,                 
-                "expiry_date": expiryDate,
-                "underlying" : underlying,
-                "exchange_code":exchangeCode,
-                "order_flow" :orderFlow,
-                "stop_loss_trigger":stopLossTrigger,
-                "option_type":optionType,
-                "source_flag" : sourceFlag,
-                "limit_rate" : limitRate,
-                "order_reference": orderReference,
-                "available_quantity":availableQuantity,
-                "market_type": marketType,
-                "fresh_order_limit":freshOrderLimit
+            var response = makeRequest("POST", "fnolmtpriceandqtycal", new Dictionary<string, object>()
+            {
+                { "strike_price", strikePrice},
+                {"product_type",productType },
+                { "expiry_date", expiryDate },
+                { "underlying" , underlying},
+                { "exchange_code",exchangeCode },
+                { "order_flow" ,orderFlow},
+                { "stop_loss_trigger",stopLossTrigger},
+                { "option_type",optionType},
+                { "source_flag" , sourceFlag},
+                { "limit_rate" , limitRate},
+                { "order_reference", orderReference},
+                { "available_quantity",availableQuantity},
+                { "market_type", marketType},
+                { "fresh_order_limit",freshOrderLimit}
             });
 
             return response;
         }
 
-        public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId)
+        public Dictionary<string, object> marginCalculator(List<Dictionary<string, object>> listOfPositions, string exchangeCode)
+        {
+            var response = makeRequest("POST", "margincalculator", new Dictionary<string, object>()
+            {
+                { "list_of_positions",listOfPositions },
+                { "exchange_code" , exchangeCode}
+                });
+            return response;
+        }
+
+
+    public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId)
         {
             if (string.IsNullOrEmpty(exchangeCode))
                 return new Dictionary<string, object>{
@@ -1383,7 +1383,6 @@ namespace Breeze
                 requestBody.Add("disclosed_quantity", disclosedQuantity);
             if (!string.IsNullOrEmpty(validityDate))
                 requestBody.Add("validity_date", validityDate);
-
             var response = makeRequest("PUT", "order", requestBody);
             return response;
         }
@@ -1668,7 +1667,7 @@ namespace Breeze
                 };
 
             var requestBody = new Dictionary<string, object> {
-
+                
                 {"stock_code", stockCode},
                 {"exchange_code",exchangeCode},
                 {"product",productType },
@@ -1776,7 +1775,7 @@ namespace Breeze
 
                             if (shortName.Equals(stockCode))
                             {
-
+                                
                                 nameMapper.Add("status ", "SUCCESS");
                                 nameMapper.Add("Isec_Token ", token);
                                 nameMapper.Add("Isec_Stock_Code ", Isec_Stock_Code);
@@ -1833,9 +1832,9 @@ namespace Breeze
 
         public bool hasSession() { return !(_apiKey is null || _userId is null || _sessionToken is null); }
 
-        public bool isConnected(bool orderflag, bool isOhlcv = false)
+        public bool isConnected(bool orderflag,bool isOhlcv = false)
         {
-            if (isOhlcv == true)
+            if(isOhlcv == true)
             {
                 return _socketOhlcv.Connected;
             }
@@ -1852,9 +1851,8 @@ namespace Breeze
 
         public bool isOrderNotificationSubscribed() { return _orderNotificationSubscribed; }
 
-        private static void Socket_OnReconnecting(object sender, int e)
-        {
-
+        private static void Socket_OnReconnecting(object sender, int e) {
+            
         }
 
         public void setOrderNotificationSubscription(bool orderNotificationSubscribed)
@@ -1887,15 +1885,15 @@ namespace Breeze
                 if (_userId is null || _sessionToken is null || _userId.Length <= 0 || _sessionToken.Length <= 0)
                     throw new Exception("Cannot initiate connection to server. UserId or SessionToken is empty.");
                 var socketIOOptions = new SocketIOOptions();
-                socketIOOptions.EIO = 4;
-                if (isOhlcv == true)
+                socketIOOptions.EIO =(SocketIOClient.EngineIO) 4;
+                if(isOhlcv == true)
                 {
                     socketIOOptions.Path = "/ohlcvstream/";
                 }
                 socketIOOptions.Auth = new Dictionary<string, string> { { "user", _userId }, { "token", _sessionToken }, };
                 socketIOOptions.ConnectionTimeout = TimeSpan.FromSeconds(10);
                 socketIOOptions.Reconnection = true;
-                socketIOOptions.ReconnectionAttempts = 10;
+                //socketIOOptions.ReconnectionAttempts = 5;
                 socketIOOptions.Transport = SocketIOClient.Transport.TransportProtocol.WebSocket;
                 socketIOOptions.ExtraHeaders = new Dictionary<string, string> { { "User_Agent", "dotnet-socketio[client]/socket" } };
                 return socketIOOptions;
@@ -2107,7 +2105,7 @@ namespace Breeze
             return _socketOhlcv;
         }
 
-        public SocketIO GetSocketIO(bool isOrder, bool isohlcv = false)
+        public SocketIO GetSocketIO(bool isOrder,bool isohlcv = false)
         {
             if (isOrder == false)
             {
@@ -2124,7 +2122,7 @@ namespace Breeze
                 else
                     return null;
             }
-            if (isohlcv == true)
+            if(isohlcv == true)
             {
                 if (_socketOhlcv.Connected)
                     return _socketOhlcv;
@@ -2138,7 +2136,7 @@ namespace Breeze
         public async Task rewatch()
         {
             Console.WriteLine("Rewatch successfull");
-            foreach (string entry in tokenlist)
+            foreach(string entry in tokenlist)
             {
                 await _socket.EmitAsync("join", entry);
             }
@@ -2153,11 +2151,11 @@ namespace Breeze
                 Console.WriteLine("Socket subscribed:" + token);
             }
 
-            catch (Exception e)
+            catch(Exception e)
             {
                 throw e;
             }
-
+            
         }
 
         public async Task watchStrategy(String token)
@@ -2172,9 +2170,9 @@ namespace Breeze
                 List<string> list = new List<string>(subscribedStocks);
                 foreach (string stockName in stockList)
                 {
-
+                    
                     await _socket.EmitAsync("join", stockName);
-
+                    
                     Console.WriteLine("Socket subscribed:" + stockName);
                     if (!list.Contains(stockName))
                         list.Add(stockName);
@@ -2182,8 +2180,8 @@ namespace Breeze
                         tokenlist.Add(stockName);
 
                 }
-
-                _socket.On("disconnect", response =>
+                
+               _socket.On("disconnect", response =>
                 {
                     Console.WriteLine("Reconnection Triggered");
                 });
@@ -2201,13 +2199,13 @@ namespace Breeze
             }
         }
 
-        public async Task unwatchOhlcv(string token, string channel)
+        public async Task unwatchOhlcv(string token,string channel)
         {
             try
             {
                 await _socketOhlcv.EmitAsync("leave", token);
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 throw ex;
             }
@@ -2285,7 +2283,7 @@ namespace Breeze
 
             else if (data[0].ToString().Equals("NFO") || data[0].ToString().Equals("MCX") || data[0].ToString().Equals("NDX"))
             {
-                if (data.GetArrayLength() == 13)
+                if(data.GetArrayLength() == 13)
                 {
                     Dictionary<string, object> candleData = new Dictionary<string, object>()
                     {
@@ -2321,7 +2319,7 @@ namespace Breeze
                         {"volume",data[7]},
                         {"oi",data[8]},
                         {"datetime",data[9]}
-
+                        
 
                     };
                     return (candleData);
@@ -2333,7 +2331,7 @@ namespace Breeze
 
         public Object parseStrategy(JsonElement data)
         {
-            if(data.GetArrayLength() == 19)
+            if (data.GetArrayLength() == 19)
             {
                 Dictionary<string, string> iclickData = new Dictionary<string, string>(){
                 {"stock_name",data[0].ToString()},
@@ -2360,7 +2358,8 @@ namespace Breeze
             }
             else
             {
-                Dictionary<string, string> strategyData = new Dictionary<string, string>(){
+                Dictionary<string, string> strategyData = new Dictionary<string, string>()
+                {
                 {"strategy_date",data[0].ToString()},
                 {"modification_date",data[1].ToString()},
                 {"portfolio_id",data[2].ToString()},
@@ -2387,14 +2386,11 @@ namespace Breeze
                 {"total_margin",data[25].ToString()},
                 {"leg_no",data[26].ToString()},
                 {"status",data[27].ToString()}
-              };
-              return (strategyData);
-
+            };
+                return (strategyData);
             }
             
         }
-
-
         public Object parseData(JsonElement data)
         {
             var exchange = data[0].GetString().Split('!')[0].Split('.')[0];

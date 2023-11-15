@@ -218,12 +218,68 @@ namespace ConsoleAppTestProject
 
                 // preview order sdk
                  Console.WriteLine(JsonSerializer.Serialize(breeze.previewOrder(stockCode:"ICIBAN",exchangeCode:"NSE",productType:"margin",orderType :"limit", price:"907.05", action:"buy", quantity:"1", expiryDate:"", right:"", strikePrice:"", specialFlag:"N", stoploss:"", orderRateFresh:"")));
-            }
-            catch (Exception ex)
+                
+                // limit calculator
+                Console.WriteLine(JsonSerializer.Serialize(breeze.limitCalculator(strikePrice:"19200", productType : "optionplus", expiryDate : "06-JUL-2023", underlying:"NIFTY", exchangeCode : "NFO", orderFlow : "Buy", stopLossTrigger : "200.00", optionType : "Call", sourceFlag : "P", limitRate : "", orderReference : "", availableQuantity : "", marketType:"limit", freshOrderLimit:"177.70")));
+
+                //margin calculator
+                
+
+        List<Dictionary<string, object>> listOfPositions = new List<Dictionary<string, object>>
+        {
+            new Dictionary<string, object>
             {
-                Console.WriteLine(ex);
-            }
+                 { "strike_price", "0" },
+                { "quantity", "15" },
+                { "right", "others" },
+                { "product", "futures" },
+                { "action", "buy" },
+                { "price", "46230.85" },
+                { "expiry_date", "31-Aug-2023" },
+                { "stock_code", "CNXBAN" },
+                { "cover_order_flow", "N" },
+                { "fresh_order_type", "N" },
+                { "cover_limit_rate", "0" },
+                { "cover_sltp_price", "0" },
+                { "fresh_limit_rate", "0" },
+                { "open_quantity", "0" }
+            },
+        new Dictionary<string, object>
+        {
+            { "strike_price", "37000" },
+            { "quantity", "15" },
+            { "right", "Call" },
+            { "product", "options" },
+            { "action", "buy" },
+            { "price", "9100" },
+            { "expiry_date", "27-Jul-2023" },
+            { "stock_code", "CNXBAN" },
+            { "cover_order_flow", "N" },
+            { "fresh_order_type", "N" },
+            { "cover_limit_rate", "0" },
+            { "cover_sltp_price", "0" },
+            { "fresh_limit_rate", "0" },
+            { "open_quantity", "0" }
         }
+    }
+
+    Console.WriteLine(JsonSerializer.Serialize(breeze.marginCalculator(listOfPositions : listOfPositions,             exchangeCode:"NFO")));
+    
+    
+    
+    
+
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex);
+    }
+
+        
+        
+        
+        }
+        
     }
 }
 ```
