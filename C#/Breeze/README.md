@@ -263,10 +263,7 @@ namespace ConsoleAppTestProject
         }
     }
 
-    Console.WriteLine(JsonSerializer.Serialize(breeze.marginCalculator(listOfPositions : listOfPositions,             exchangeCode:"NFO")));
-    
-    
-    
+    Console.WriteLine(JsonSerializer.Serialize(breeze.marginCalculator(listOfPositions : listOfPositions,exchangeCode:"NFO")));
     
 
     }
