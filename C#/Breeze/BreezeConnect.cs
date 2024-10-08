@@ -515,7 +515,7 @@ namespace Breeze
 
                     string exchangeQuotesTokenValue = "";
                     if (getExchangeQuotes)
-                        exchangeQuotesTokenValue = exchangeQuotesTokenValue + "1!" + tokenValue;
+                        exchangeQuotesTokenValue = exchangeCodeName + "1!" + tokenValue;
 
                     string marketDepthTokenValue = "";
                     if (getMarketDepth)
