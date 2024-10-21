@@ -18,6 +18,7 @@ namespace Breeze
     public class BreezeConnect
     {
         private string _apiKey;
+        private static string globalInterval;
         ApificationBreeze _apiHandler = new ApificationBreeze();
         SocketEventBreeze _socketHandler = new SocketEventBreeze();
         SocketEventBreeze _socketHandlerOrder = new SocketEventBreeze(); //for order refresh
@@ -136,16 +137,18 @@ namespace Breeze
         }
         private Dictionary<string, string[]>[] getStockScriptList()
         {
-            _stockScriptDictList = new Dictionary<string, string>[5]
+            _stockScriptDictList = new Dictionary<string, string>[6]
             {
+                new Dictionary<string, string>{},
                 new Dictionary<string, string>{},
                 new Dictionary<string, string>{},
                 new Dictionary<string, string>{},
                 new Dictionary<string, string>{},
                 new Dictionary<string, string>{}
             };
-            var tokenScriptDictList = new Dictionary<string, string[]>[5]
+            var tokenScriptDictList = new Dictionary<string, string[]>[6]
             {
+                new Dictionary<string, string[]>{},
                 new Dictionary<string, string[]>{},
                 new Dictionary<string, string[]>{},
                 new Dictionary<string, string[]>{},
@@ -190,6 +193,12 @@ namespace Breeze
                         _stockScriptDictList[4].Add(row[7], row[5]);
                         string[] values = { row[7], row[1] };
                         tokenScriptDictList[4] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[4]);
+                    }
+                    else if (row[2] == "BFO")
+                    {
+                        _stockScriptDictList[5].Add(row[7], row[5]);
+                        string[] values = { row[7], row[1] };
+                        tokenScriptDictList[5] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[5]);
                     }
                 }
             }
@@ -240,7 +249,7 @@ namespace Breeze
                     { "Status" , 500 },
                     { "Error" , "Session not generated. Please generate session." },
                 };
-            else if (_socketHandlerOhlcv.isConnected(false,true))
+            else if (_socketHandlerOhlcv.isConnected(false, true))
                 return new Dictionary<string, object>() {
                     {"Success",null},
                     {"Status",500},
@@ -248,7 +257,7 @@ namespace Breeze
                 };
             else
             {
-                if (_socketHandlerOhlcv.isConnected(false,true))
+                if (_socketHandlerOhlcv.isConnected(false, true))
                     return new Dictionary<string, object>() {
                         {"Success","Socket connection for ohlc streaming established."},
                         {"Status",200},
@@ -300,7 +309,7 @@ namespace Breeze
             }
         }
 
-        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken,bool isStrategy = false)
+        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken, bool isStrategy = false)
         {
             if (stockToken is null || stockToken.Length == 0)
                 return new Dictionary<string, object>() {
@@ -308,7 +317,7 @@ namespace Breeze
                     { "Status", 500 },
                     { "Error", "Stock-Token cannot be empty" }
                 };
-            if(!isStrategy)
+            if (!isStrategy)
                 await _socketHandler.watch(new string[] { stockToken });
             else
                 await _socketHandlerOrder.watchStrategy(stockToken);
@@ -319,10 +328,10 @@ namespace Breeze
             };
         }
 
-        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken,string channel)
+        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken, string channel)
         {
-            
-            await _socketHandlerOhlcv.watchOhlcv(stockToken,channel);
+
+            await _socketHandlerOhlcv.watchOhlcv(stockToken, channel);
             return new Dictionary<string, object>() {
                 { "Success", "Stock " + stockToken + " subscribed successfully" },
                 { "Status", 200 },
@@ -330,7 +339,7 @@ namespace Breeze
             };
         }
 
-        public async  Task<Dictionary<string, object>> subscribeFeedsAsync(bool getOrderNotification = false)
+        public async Task<Dictionary<string, object>> subscribeFeedsAsync(bool getOrderNotification = false)
         {
             if (!getOrderNotification)
                 return new Dictionary<string, object>() {
@@ -377,6 +386,30 @@ namespace Breeze
                 };
         }
 
+        public async Task<Dictionary<string, object>> subscribeFeedsAsync(string exchangeCode, string stockCode, string productType, string expiryDate, string strikePrice, string right, bool getExchangeQuotes, bool getMarketDepth, string interval)
+        {
+            globalInterval = interval;
+            string[] tokenObject = getStockTokenValue(exchangeCode, stockCode, productType, expiryDate, strikePrice, right, getExchangeQuotes, getMarketDepth, interval);
+            if (tokenObject.Length != 2)
+            {
+                return new Dictionary<string, object>{
+                    { "Success", null },
+                    { "Status", 500 },
+                    { "Error", "Stock-Token not found for Stock-Code " + stockCode + "." }
+                };
+            }
+            if (!string.IsNullOrEmpty(tokenObject[0]))
+                await _socketHandlerOhlcv.watchOhlcv(tokenObject[0], interval);
+            if (!string.IsNullOrEmpty(tokenObject[1]))
+                await _socketHandlerOhlcv.watchOhlcv(tokenObject[1], interval);
+            return new Dictionary<string, object>{
+                    { "Success", "Stock-Code " + stockCode + " subscribed successfully." },
+                    { "Status", 200 },
+                    { "Error", null }
+                };
+        }
+
+
         public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string stockToken, string channel)
         {
 
@@ -388,7 +421,7 @@ namespace Breeze
             };
         }
 
-        public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string stockToken,bool isStrategy = false)
+        public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string stockToken, bool isStrategy = false)
         {
             if (stockToken is null || stockToken.Length == 0)
                 return new Dictionary<string, object>() {
@@ -432,9 +465,9 @@ namespace Breeze
             }
         }
 
-        public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string exchangeCode, string stockCode, string productType, string expiryDate, string strikePrice, string right, bool getExchangeQuotes, bool getMarketDepth)
+        public async Task<Dictionary<string, object>> unsubscribeFeedsAsync(string exchangeCode, string stockCode, string productType, string expiryDate, string strikePrice, string right, bool getExchangeQuotes, bool getMarketDepth, string interval)
         {
-            string[] tokenObject = getStockTokenValue(exchangeCode, stockCode, productType, expiryDate, strikePrice, right, getExchangeQuotes, getMarketDepth);
+            string[] tokenObject = getStockTokenValue(exchangeCode, stockCode, productType, expiryDate, strikePrice, right, getExchangeQuotes, getMarketDepth, interval);
             if (tokenObject.Length != 2)
             {
                 return new Dictionary<string, object>{
@@ -444,9 +477,9 @@ namespace Breeze
                 };
             }
             if (!string.IsNullOrEmpty(tokenObject[0]))
-                await _socketHandler.unWatch(new string[] { tokenObject[0] });
+                await _socketHandlerOhlcv.unwatchOhlcv(tokenObject[0], interval);
             if (!string.IsNullOrEmpty(tokenObject[1]))
-                await _socketHandler.unWatch(new string[] { tokenObject[1] });
+                await _socketHandlerOhlcv.unwatchOhlcv(tokenObject[1] , interval);
             return new Dictionary<string, object>{
                 { "Success", "Stock-Code " + stockCode + " unsubscribed successfully." },
                 { "Status", 200 },
@@ -454,7 +487,7 @@ namespace Breeze
             };
         }
 
-        private string[] getStockTokenValue(string exchangeCode, string stockCode, string productType, string expiryDate, string strikePrice, string right, bool getExchangeQuotes, bool getMarketDepth)
+        private string[] getStockTokenValue(string exchangeCode, string stockCode, string productType, string expiryDate, string strikePrice, string right, bool getExchangeQuotes, bool getMarketDepth, string interval = null)
         {
             if (!getExchangeQuotes && !getMarketDepth)
                 throw new Exception("Either getExchangeQuotes must be true or getMarketDepth must be true");
@@ -466,9 +499,20 @@ namespace Breeze
                 exchangeCodeList.Add("NDX", "13.");
                 exchangeCodeList.Add("MCX", "6.");
                 exchangeCodeList.Add("NFO", "4.");
+                exchangeCodeList.Add("BFO", "2.");
+
+                if (string.IsNullOrEmpty(interval))
+                {
+
+                    exchangeCodeList["BFO"] = "8.";
+                }
+                //if (interval == "" || interval == "")
+                //{
+
+
                 _ = exchangeCodeList.TryGetValue(exchangeCode, out string exchangeCodeName) ? _ = "" : exchangeCodeName = "";
                 if (exchangeCodeName is null || exchangeCodeName.Length == 0)
-                    throw new Exception("Exchange Code allowed are 'BSE', 'NSE', 'NDX', 'MCX' or 'NFO'.");
+                    throw new Exception("Exchange Code allowed are 'BSE', 'NSE', 'NDX', 'MCX', 'NFO' or 'BFO'.");
                 else if (stockCode is null || stockCode.Length == 0)
                     throw new Exception("Stock-Code cannot be empty.");
                 else
@@ -509,6 +553,8 @@ namespace Breeze
                             _stockScriptDictList[3].TryGetValue(contractDetailValue, out tokenValue);
                         else if (exchangeCode.ToLower() == "nfo")
                             _stockScriptDictList[4].TryGetValue(contractDetailValue, out tokenValue);
+                        else if (exchangeCode.ToLower() == "bfo")
+                            _stockScriptDictList[5].TryGetValue(contractDetailValue, out tokenValue);
                     }
                     if (string.IsNullOrEmpty(tokenValue))
                         throw new Exception("Stock-Code not found.");
@@ -530,14 +576,15 @@ namespace Breeze
 
         public void ticker(Action<Object> callback)
         {
+
             while (true)
             {
-                if(_socket.Disconnected)
+                if (_socket.Disconnected)
                 {
                     wsConnectAsync();
                     Console.WriteLine("reconnection established");
                     _socketHandler.rewatch();
-                    
+
                 }
 
                 if (_socket is null)
@@ -559,7 +606,7 @@ namespace Breeze
 
                 if (_socketOhlcv is null)
                 {
-                    _socketOhlcv = _socketHandlerOhlcv.GetSocketIO(false,true);
+                    _socketOhlcv = _socketHandlerOhlcv.GetSocketIO(false, true);
                     if (_socketOhlcv is null)
                         throw new Exception("Socket not connected. Cannot return any ticks for ohlcv streaming");
                     else if (!_socketOhlcv.Connected)
@@ -592,33 +639,44 @@ namespace Breeze
                     }
                 });
 
-                _socketOhlcv.On("1second", response =>
-                {
-                    object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
-                    callback(data);
-                });
 
-                _socketOhlcv.On("1minute", response =>
+                if (globalInterval == "1second")
                 {
-                    object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
-                    callback(data);
-                });
-
-                _socketOhlcv.On("5minute", response =>
+                    _socketOhlcv.On("1SEC", response =>
+                    {
+                        object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
+                        callback(data);
+                    });
+                }
+                else if (globalInterval == "1minute")
                 {
-                    object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
-                    callback(data);
-                });
-
-                _socketOhlcv.On("30minute", response =>
+                    _socketOhlcv.On("1MIN", response =>
+                    {
+                        object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
+                        callback(data);
+                    });
+                }
+                else if (globalInterval == "5minute")
                 {
-                    object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
-                    callback(data);
-                });
+                    _socketOhlcv.On("5MIN", response =>
+                    {
+                        object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
+                        callback(data);
+                    });
+                }
+                else if (globalInterval == "30minute")
+                {
+                    _socketOhlcv.On("30MIN", response =>
+                    {
+                        object data = _socketHandlerOhlcv.parseOhlcv(response.GetValue());
+                        callback(data);
+                    });
+                }
 
                 //return;
             }
         }
+
 
         public Dictionary<string, object> getCustomerDetail(string apiSession) { return _apiHandler.getCustomerDetail(apiSession); }
         public Dictionary<string, object> getDematHoldings() { return _apiHandler.getDematHoldings(); }
@@ -1245,7 +1303,7 @@ namespace Breeze
         }
 
 
-    public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId)
+        public Dictionary<string, object> getOrderDetail(string exchangeCode, string orderId)
         {
             if (string.IsNullOrEmpty(exchangeCode))
                 return new Dictionary<string, object>{
@@ -1667,7 +1725,7 @@ namespace Breeze
                 };
 
             var requestBody = new Dictionary<string, object> {
-                
+
                 {"stock_code", stockCode},
                 {"exchange_code",exchangeCode},
                 {"product",productType },
@@ -1775,7 +1833,7 @@ namespace Breeze
 
                             if (shortName.Equals(stockCode))
                             {
-                                
+
                                 nameMapper.Add("status ", "SUCCESS");
                                 nameMapper.Add("Isec_Token ", token);
                                 nameMapper.Add("Isec_Stock_Code ", Isec_Stock_Code);
@@ -1832,9 +1890,9 @@ namespace Breeze
 
         public bool hasSession() { return !(_apiKey is null || _userId is null || _sessionToken is null); }
 
-        public bool isConnected(bool orderflag,bool isOhlcv = false)
+        public bool isConnected(bool orderflag, bool isOhlcv = false)
         {
-            if(isOhlcv == true)
+            if (isOhlcv == true)
             {
                 return _socketOhlcv.Connected;
             }
@@ -1851,8 +1909,9 @@ namespace Breeze
 
         public bool isOrderNotificationSubscribed() { return _orderNotificationSubscribed; }
 
-        private static void Socket_OnReconnecting(object sender, int e) {
-            
+        private static void Socket_OnReconnecting(object sender, int e)
+        {
+
         }
 
         public void setOrderNotificationSubscription(bool orderNotificationSubscribed)
@@ -1885,8 +1944,8 @@ namespace Breeze
                 if (_userId is null || _sessionToken is null || _userId.Length <= 0 || _sessionToken.Length <= 0)
                     throw new Exception("Cannot initiate connection to server. UserId or SessionToken is empty.");
                 var socketIOOptions = new SocketIOOptions();
-                socketIOOptions.EIO =(SocketIOClient.EngineIO) 4;
-                if(isOhlcv == true)
+                socketIOOptions.EIO = (SocketIOClient.EngineIO)4;
+                if (isOhlcv == true)
                 {
                     socketIOOptions.Path = "/ohlcvstream/";
                 }
@@ -1974,7 +2033,8 @@ namespace Breeze
                 {"1", "BSE"},
                 {"4", "NSE"},
                 {"13", "NDX"},
-                {"6", "MCX"}
+                {"6", "MCX"},
+                {"8", "BFO"}
             };
             exchangeCodeList.TryGetValue(exchangeType, out string exchangeCodeName);
             string[] stockData = new string[0];
@@ -2010,6 +2070,20 @@ namespace Breeze
                 if (stockData is null || stockData.Length != 2)
                     throw new Exception("Stock-Data does not exist in exchange-code MCX for Stock-Token " + stockTokenInput);
             }
+            //else if (exchangeCodeName.ToLower() == "nfo")
+            //{
+            //    _tokenScriptDictList[4].TryGetValue(stockToken, out stockData);
+            //    if (stockData is null || stockData.Length != 2)
+            //        throw new Exception("Stock-Data does not exist in exchange-code NFO for Stock-Token " + stockTokenInput);
+            //}
+            else if (exchangeCodeName.ToLower() == "bfo")
+            {
+                _tokenScriptDictList[5].TryGetValue(stockToken, out stockData);
+                if (stockData is null || stockData.Length != 2)
+                    throw new Exception("Stock-Data does not exist in exchange-code BFO for Stock-Token " + stockTokenInput);
+            }
+
+
             outputData.Add("stock_name", stockData[1]);
             if (exchangeCodeName.ToLower() != "nse" && exchangeCodeName.ToLower() != "bse")
             {
@@ -2105,7 +2179,7 @@ namespace Breeze
             return _socketOhlcv;
         }
 
-        public SocketIO GetSocketIO(bool isOrder,bool isohlcv = false)
+        public SocketIO GetSocketIO(bool isOrder, bool isohlcv = false)
         {
             if (isOrder == false)
             {
@@ -2122,7 +2196,7 @@ namespace Breeze
                 else
                     return null;
             }
-            if(isohlcv == true)
+            if (isohlcv == true)
             {
                 if (_socketOhlcv.Connected)
                     return _socketOhlcv;
@@ -2136,7 +2210,7 @@ namespace Breeze
         public async Task rewatch()
         {
             Console.WriteLine("Rewatch successfull");
-            foreach(string entry in tokenlist)
+            foreach (string entry in tokenlist)
             {
                 await _socket.EmitAsync("join", entry);
             }
@@ -2151,11 +2225,11 @@ namespace Breeze
                 Console.WriteLine("Socket subscribed:" + token);
             }
 
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw e;
             }
-            
+
         }
 
         public async Task watchStrategy(String token)
@@ -2170,9 +2244,9 @@ namespace Breeze
                 List<string> list = new List<string>(subscribedStocks);
                 foreach (string stockName in stockList)
                 {
-                    
+
                     await _socket.EmitAsync("join", stockName);
-                    
+
                     Console.WriteLine("Socket subscribed:" + stockName);
                     if (!list.Contains(stockName))
                         list.Add(stockName);
@@ -2180,8 +2254,8 @@ namespace Breeze
                         tokenlist.Add(stockName);
 
                 }
-                
-               _socket.On("disconnect", response =>
+
+                _socket.On("disconnect", response =>
                 {
                     Console.WriteLine("Reconnection Triggered");
                 });
@@ -2199,13 +2273,13 @@ namespace Breeze
             }
         }
 
-        public async Task unwatchOhlcv(string token,string channel)
+        public async Task unwatchOhlcv(string token, string channel)
         {
             try
             {
                 await _socketOhlcv.EmitAsync("leave", token);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -2249,57 +2323,61 @@ namespace Breeze
         public Dictionary<string, object> parseOhlcv(JsonElement data)
         {
             Dictionary<string, string> feedIntervalMap = new Dictionary<string, string>()
-            {
-                {"1MIN","1minute"},
-                {"5MIN", "5minute" },
-                {"30MIN", "30minute" },
-                {"1SEC", "1second" }
-            };
+                {
+                    {"1MIN", "1minute" },
+                    {"5MIN", "5minute" },
+                    {"30MIN", "30minute" },
+                    {"1SEC", "1second" }
+                };
 
             Dictionary<string, string> channelIntervalMap = new Dictionary<string, string>()
-            {
-                {"1minute","1MIN"},
-                {"5minute","5MIN"},
-                {"30minute","30MIN"},
-                {"1second","1SEC"}
-            };
+                {
+                    {"1minute", "1MIN"},
+                    {"5minute", "5MIN"},
+                    {"30minute", "30MIN"},
+                    {"1second", "1SEC"}
+                };
 
-            if (data[0].ToString().Equals("NSE") || data[0].ToString().Equals("BSE"))
+            string dataString = data.GetString();
+            string[] dataArray = dataString.Split(',');
+
+
+            if (dataArray[0].ToString().Equals("NSE") || dataArray[0].ToString().Equals("BSE"))
             {
                 Dictionary<string, object> candleData = new Dictionary<string, object>()
                 {
                     {"interval",feedIntervalMap[data[8].ToString()] },
-                    {"exchange_code",data[0]},
-                    {"stock_code",data[1] },
-                    {"low",data[2]},
-                    {"high",data[3]},
-                    {"open",data[4]},
-                    {"close",data[5]},
-                    {"volume",data[6]},
-                    {"datetime",data[7]}
+                    {"exchange_code",dataArray[0]},
+                    {"stock_code",dataArray[1] },
+                    {"low",dataArray[2]},
+                    {"high",dataArray[3]},
+                    {"open",dataArray[4]},
+                    {"close",dataArray[5]},
+                    {"volume",dataArray[6]},
+                    {"datetime",dataArray[7]}
                 };
                 return (candleData);
             }
 
-            else if (data[0].ToString().Equals("NFO") || data[0].ToString().Equals("MCX") || data[0].ToString().Equals("NDX"))
+            else if (dataArray[0].ToString().Equals("NFO") || dataArray[0].ToString().Equals("MCX") || dataArray[0].ToString().Equals("NDX") || dataArray[0].ToString().Equals("BFO"))
             {
-                if(data.GetArrayLength() == 13)
+                if (dataArray.Length == 13)
                 {
                     Dictionary<string, object> candleData = new Dictionary<string, object>()
                     {
-                        {"interval",feedIntervalMap[data[12].ToString()] },
-                        {"exchange_code",data[0]},
-                        {"stock_code",data[1] },
-                        {"expiry_date",data[2]},
-                        {"strike_price",data[3]},
-                        {"right_type",data[4]},
-                        {"low",data[5]},
-                        {"high",data[6]},
-                        {"open",data[7]},
-                        {"close",data[8]},
-                        {"volume",data[9]},
-                        {"oi",data[10]},
-                        {"datetime",data[11]}
+                        {"interval",feedIntervalMap[dataArray[12].ToString()] },
+                        {"exchange_code",dataArray[0]},
+                        {"stock_code",dataArray[1] },
+                        {"expiry_date",dataArray[2]},
+                        {"strike_price",dataArray[3]},
+                        {"right_type",dataArray[4]},
+                        {"low",dataArray[5]},
+                        {"high",dataArray[6]},
+                        {"open",dataArray[7]},
+                        {"close",dataArray[8]},
+                        {"volume",dataArray[9]},
+                        {"oi",dataArray[10]},
+                        {"datetime",dataArray[11]}
 
                     };
                     return (candleData);
@@ -2308,18 +2386,18 @@ namespace Breeze
                 {
                     Dictionary<string, object> candleData = new Dictionary<string, object>()
                     {
-                        {"interval",feedIntervalMap[data[10].ToString()] },
-                        {"exchange_code",data[0]},
-                        {"stock_code",data[1] },
-                        {"expiry_date",data[2]},
-                        {"low",data[3]},
-                        {"high",data[4]},
-                        {"open",data[5]},
-                        {"close",data[6]},
-                        {"volume",data[7]},
-                        {"oi",data[8]},
-                        {"datetime",data[9]}
-                        
+                        {"interval",feedIntervalMap[dataArray[10].ToString()] },
+                        {"exchange_code",dataArray[0]},
+                        {"stock_code",dataArray[1] },
+                        {"expiry_date",dataArray[2]},
+                        {"low",dataArray[3]},
+                        {"high",dataArray[4]},
+                        {"open",dataArray[5]},
+                        {"close",dataArray[6]},
+                        {"volume",dataArray[7]},
+                        {"oi",dataArray[8]},
+                        {"datetime",dataArray[9]}
+
 
                     };
                     return (candleData);
@@ -2328,6 +2406,7 @@ namespace Breeze
             return (null);
 
         }
+
 
         public Object parseStrategy(JsonElement data)
         {
@@ -2389,7 +2468,7 @@ namespace Breeze
             };
                 return (strategyData);
             }
-            
+
         }
         public Object parseData(JsonElement data)
         {
@@ -2404,13 +2483,19 @@ namespace Breeze
                     exchange = "NSE Futures & Options";
             }
             else if (exchange.Equals("13"))
+            {
                 exchange = "NSE Currency";
+            }
             else if (exchange.Equals("6"))
             {
                 exchange = "Commodity";
                 return parseCommodityData(data, exchange);
             }
-
+            else if (exchange.Equals("8"))
+            {
+                exchange = "BSE Futures & Options";
+            }
+            //Console.WriteLine("array length is" + data.GetArrayLength());
             if (data.GetArrayLength() == 21 || data.GetArrayLength() == 23)
                 return parseExchangeQuoteData(data, exchange);
             else if (data.GetArrayLength() == 3)
@@ -2475,10 +2560,11 @@ namespace Breeze
         private Dictionary<string, object> parseMarketDepthData(JsonElement data, string exchange)
         {
             Dictionary<string, object>[] nestedMarketDepthDataArray = new Dictionary<string, object>[data[2].GetArrayLength()];
+            //Console.WriteLine("array is " + data[2].GetArrayLength());
             for (int i = 0; i < data[2].GetArrayLength(); i++)
             {
                 Dictionary<string, object> nestedMarketDepthData = new Dictionary<string, object>();
-                if (exchange.Equals("BSE"))
+                if (exchange.Equals("BSE") || (exchange.Equals("BSE Futures & Options")))
                 {
                     nestedMarketDepthData.Add("BestBuyRate-" + (i + 1).ToString(), data[2][i][0]);
                     nestedMarketDepthData.Add("BestBuyQty-" + (i + 1).ToString(), data[2][i][1]);
