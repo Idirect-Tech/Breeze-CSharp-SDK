@@ -721,9 +721,9 @@ namespace Breeze
         RestClient _client = new RestClient("https://api.icicidirect.com/breezeapi/api/v1/");
         private string[] transactionTypeList = { "debit", "credit" };
         private string[] intervalList = { "1minute", "5minute", "30minute", "1day" };
-        private string[] exchangeCodeList = { "nse", "nfo" };
+        private string[] exchangeCodeList = { "nse", "nfo","bfo","bse" };
         private string[] nfoProductTypeList = { "futures", "options", "futureplus", "optionplus" };
-        private string[] productTypeList = { "futures", "options", "futureplus", "optionplus", "cash", "eatm", "margin" };
+        private string[] productTypeList = { "futures", "options", "futureplus", "optionplus", "cash", "eatm", "margin","mtf" };
         private string[] rightList = { "call", "put", "others" };
         private string[] actionList = { "buy", "sell" };
         private string[] orderTypeList = { "limit", "market", "stoploss" };
@@ -778,41 +778,50 @@ namespace Breeze
 
         public Dictionary<string, object> makeRequest(string method, string endpoint, Dictionary<string, object> requestBody)
         {
-            RestResponse response;
-            RestRequest request;
-            if (!hasSession())
-                return new Dictionary<string, object>
+            try
+            {
+                RestResponse response;
+                RestRequest request;
+                if (!hasSession())
+                    return new Dictionary<string, object>
                 {
                     { "Success" , "" },
                     { "Status" , 500 },
                     { "Error" , "Session not generated. Please generate session." },
                 };
-            switch (method.ToUpper())
-            {
-                case "GET":
-                    request = new RestRequest(endpoint, Method.Get);
-                    break;
-                case "POST":
-                    request = new RestRequest(endpoint, Method.Post);
-                    break;
-                case "PUT":
-                    request = new RestRequest(endpoint, Method.Put);
-                    break;
-                case "DELETE":
-                    request = new RestRequest(endpoint, Method.Delete);
-                    break;
-                default:
-                    return new Dictionary<string, object>()
+                switch (method.ToUpper())
+                {
+                    case "GET":
+                        request = new RestRequest(endpoint, Method.Get);
+                        break;
+                    case "POST":
+                        request = new RestRequest(endpoint, Method.Post);
+                        break;
+                    case "PUT":
+                        request = new RestRequest(endpoint, Method.Put);
+                        break;
+                    case "DELETE":
+                        request = new RestRequest(endpoint, Method.Delete);
+                        break;
+                    default:
+                        return new Dictionary<string, object>()
                     {
                         { "Success", ""},
                         { "Status", 500},
                         { "Error", "Invalid Request Method - Must be GET, POST, PUT or DELETE" }
                     };
+                }
+                request.AddParameter("application/json", JsonSerializer.Serialize(requestBody), ParameterType.RequestBody);
+                request = prepRequestHeader(requestBody, request);
+                response = _client.Execute(request);
+                return JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content);
             }
-            request.AddParameter("application/json", JsonSerializer.Serialize(requestBody), ParameterType.RequestBody);
-            request = prepRequestHeader(requestBody, request);
-            response = _client.Execute(request);
-            return JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content);
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                return null;
+            }
+            
         }
 
         public Dictionary<string, object> getCustomerDetail(string apiSession)
@@ -877,10 +886,10 @@ namespace Breeze
                     { "Status", 500},
                     { "Error", "amount cannot be empty" }
                 };
-            else if (int.TryParse(amount, out int amountValue) && amountValue > 0)
+            else if (!int.TryParse(amount, out int amountValue) || amountValue <= 0)
                 return new Dictionary<string, object>{
-                    { "Success", ""},
-                    { "Status", 500},
+                    { "Success", "" },
+                    { "Status", 500 },
                     { "Error", "amount should be more than 0" }
                 };
             else if (string.IsNullOrEmpty(segment))
@@ -1011,7 +1020,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', or 'margin'" }
+                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', 'mtf' or 'margin'" }
                 };
             else if (!string.IsNullOrEmpty(right) && !checkList(rightList, right))
                 return new Dictionary<string, object>{
@@ -1086,7 +1095,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "exchangeCode should be either 'nse', or 'nfo'" }
+                    { "Error", "exchangeCode should be either NSE, NFO, BSE or BFO" }
                 };
             else if (string.IsNullOrEmpty(productType))
                 return new Dictionary<string, object>{
@@ -1098,7 +1107,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', or 'margin'" }
+                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', 'mtf' or 'margin'" }
                 };
             else if (string.IsNullOrEmpty(action))
                 return new Dictionary<string, object>{
@@ -1156,7 +1165,8 @@ namespace Breeze
                 {"order_type", orderType},
                 {"quantity", quantity},
                 {"price", price},
-                {"validity", validity}
+                {"validity", validity},
+                {"user_remark", userRemark }
             };
             if (!string.IsNullOrEmpty(stoploss))
                 requestBody.Add("stoploss", stoploss);
@@ -1502,7 +1512,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', or 'margin'" }
+                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', 'mtf' or 'margin'" }
                 };
             else if (!string.IsNullOrEmpty(right) && !checkList(rightList, right))
                 return new Dictionary<string, object>{
@@ -1664,7 +1674,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm', or 'margin'" }
+                    { "Error", "productType should be either 'futures', 'options', 'futureplus', 'optionplus', 'cash', 'eatm','mtf' or 'margin'" }
                 };
             else if (!string.IsNullOrEmpty(action) && !checkList(actionList, action))
                 return new Dictionary<string, object>{
