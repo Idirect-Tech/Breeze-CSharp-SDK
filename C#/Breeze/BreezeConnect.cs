@@ -1,17 +1,23 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using RestSharp;
+using SocketIOClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Formats.Asn1;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using SocketIOClient;
-using RestSharp;
-using System.Security.Cryptography;
-using System.Net.Http;
-using System.Reflection;
-using System.IO;
-using Newtonsoft.Json.Linq;
-using System.Linq;
+using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace Breeze
 {
@@ -28,6 +34,7 @@ namespace Breeze
         public SocketIO _socket = null;
         public SocketIO _socketOrder = null;
         public SocketIO _socketOhlcv = null;
+
 
         public BreezeConnect(string apiKey)
         {
@@ -126,6 +133,7 @@ namespace Breeze
         } //Need to handle exception
 
 
+
         public void generateSessionAsPerVersion(string secretKey, string sessionToken, bool debug = false)
         {
 #if NET472_OR_GREATER
@@ -135,75 +143,189 @@ namespace Breeze
 #endif
 
         }
+
         private Dictionary<string, string[]>[] getStockScriptList()
         {
             _stockScriptDictList = new Dictionary<string, string>[6]
             {
-                new Dictionary<string, string>{},
-                new Dictionary<string, string>{},
-                new Dictionary<string, string>{},
-                new Dictionary<string, string>{},
-                new Dictionary<string, string>{},
-                new Dictionary<string, string>{}
+        new Dictionary<string, string>{}, // BSE
+        new Dictionary<string, string>{}, // NSE
+        new Dictionary<string, string>{}, // NDX 
+        new Dictionary<string, string>{}, // MCX 
+        new Dictionary<string, string>{}, // NFO
+        new Dictionary<string, string>{}  // BFO
             };
+
             var tokenScriptDictList = new Dictionary<string, string[]>[6]
             {
-                new Dictionary<string, string[]>{},
-                new Dictionary<string, string[]>{},
-                new Dictionary<string, string[]>{},
-                new Dictionary<string, string[]>{},
-                new Dictionary<string, string[]>{},
-                new Dictionary<string, string[]>{}
-            }; ;
-            using (WebClient web = new WebClient())
+        new Dictionary<string, string[]>{},
+        new Dictionary<string, string[]>{},
+        new Dictionary<string, string[]>{},
+        new Dictionary<string, string[]>{},
+        new Dictionary<string, string[]>{},
+        new Dictionary<string, string[]>{}
+            };
+
+            try
             {
-                var file = web.DownloadData("https://traderweb.icicidirect.com/Content/File/txtFile/ScripFile/StockScriptNew.csv");
-                var stockDataList = Encoding.UTF8.GetString(file).Split('\n');
-                foreach (var rowString in stockDataList)
+                using (WebClient webClient = new WebClient())
                 {
-                    if (rowString == "") continue;
-                    var row = rowString.Split(',');
-                    if (row[5] == "0" || row[5] == "00" || row[5] == "NA") continue;
-                    if (row[2] == "BSE")
+                    byte[] zipBytes = webClient.DownloadData("https://directlink.icicidirect.com/MotherAppMaster/SecurityMaster.zip");
+
+                    using (MemoryStream zipStream = new MemoryStream(zipBytes))
+                    using (ZipArchive archive = new ZipArchive(zipStream))
                     {
-                        _stockScriptDictList[0].Add(row[3], row[5]);
-                        string[] values = { row[3], row[1] };
-                        tokenScriptDictList[0] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[0]);
-                    }
-                    else if (row[2] == "NSE")
-                    {
-                        _stockScriptDictList[1].Add(row[3], row[5]);
-                        string[] values = { row[3], row[1] };
-                        tokenScriptDictList[1] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[1]);
-                    }
-                    else if (row[2] == "NDX")
-                    {
-                        _stockScriptDictList[2].Add(row[7], row[5]);
-                        string[] values = { row[7], row[1] };
-                        tokenScriptDictList[2] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[2]);
-                    }
-                    else if (row[2] == "MCX")
-                    {
-                        _stockScriptDictList[3].Add(row[7], row[5]);
-                        string[] values = { row[7], row[1] };
-                        tokenScriptDictList[3] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[3]);
-                    }
-                    else if (row[2] == "NFO")
-                    {
-                        _stockScriptDictList[4].Add(row[7], row[5]);
-                        string[] values = { row[7], row[1] };
-                        tokenScriptDictList[4] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[4]);
-                    }
-                    else if (row[2] == "BFO")
-                    {
-                        _stockScriptDictList[5].Add(row[7], row[5]);
-                        string[] values = { row[7], row[1] };
-                        tokenScriptDictList[5] = Miscellaneous.tryAddToDictionary(row[5], values, tokenScriptDictList[5]);
+                        foreach (var entry in archive.Entries)
+                        {
+                            if (!entry.Name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                                continue;
+
+                            string exchangeCode = "";
+                            string fileName = Path.GetFileNameWithoutExtension(entry.Name).ToUpper();
+
+                            if (fileName.Contains("FONSE")) exchangeCode = "NFO";
+                            else if (fileName.Contains("FOBSE")) exchangeCode = "BFO";
+                            //else if (fileName.Contains("CDNSE")) exchangeCode = "CDNSE";
+                            else if (fileName.Contains("MCX")) exchangeCode = "MCX";
+                            else if (fileName.Contains("NDX")) exchangeCode = "NDX";
+                            else if (fileName.Contains("NSE")) exchangeCode = "NSE";
+                            else if (fileName.Contains("BSE")) exchangeCode = "BSE";
+                            else continue;
+
+                            using (var reader = new StreamReader(entry.Open()))
+                            {
+                                // Skip header line if present
+                                string header = reader.ReadLine();
+                                string line;
+
+                                while ((line = reader.ReadLine()) != null)
+                                {
+                                    string[] columns = line.Split(',');
+                                    //Encoding.UTF8.GetString(file).Split('\n');
+                                    if (columns.Length < 5)
+                                        continue;
+
+                                    // Add ExchangeCode column dynamically
+                                    var extendedColumns = columns.Append(exchangeCode).ToArray();
+
+                                    string token = "";
+                                    string stockCode = "";
+                                    string companyName = "";
+                                    string contractName = "";
+
+                                    switch (exchangeCode)
+                                    {
+                                        case "BSE":
+                                            token = columns[0].Trim('"');
+                                            stockCode = columns[1].Trim('"');
+                                            companyName = columns[3].Trim('"');
+                                            _stockScriptDictList[0][stockCode] = token;
+                                            tokenScriptDictList[0][token] = new[] { stockCode, companyName };
+                                            break;
+
+                                        case "NSE":
+                                            token = columns[0].Trim('"');
+                                            stockCode = columns[1].Trim('"');
+                                            companyName = columns[3].Trim('"');
+                                            _stockScriptDictList[1][stockCode] = token;
+                                            tokenScriptDictList[1][token] = new[] { stockCode, companyName };
+                                            break;
+
+                                        case "NFO":
+                                            contractName = getContractName(columns[2], columns[3], columns[4], columns[5], columns[6]);
+                                            //Console.WriteLine(contractName);
+                                            token = columns[0].Trim('"');
+                                            stockCode = columns[2].Trim('"');
+                                            companyName = columns[29].Trim('"');
+                                            _stockScriptDictList[4][contractName] = token;
+                                            tokenScriptDictList[4][token] = new[] { contractName, companyName };
+                                            break;
+
+                                        case "BFO":
+                                            contractName = getContractName(columns[2], columns[3], columns[4], columns[5], columns[6]);
+                                            //Console.WriteLine(contractName);
+                                            token = columns[0].Trim('"');
+                                            stockCode = columns[2].Trim('"');
+                                            companyName = columns[29].Trim('"');
+                                            _stockScriptDictList[5][contractName] = token;
+                                            tokenScriptDictList[5][token] = new[] { contractName, companyName };
+                                            break;
+
+                                        case "MCX":
+                                            contractName = getContractName(columns[2], columns[3], columns[7], columns[9], columns[8]);
+                                            //Console.WriteLine(contractName);
+                                            token = columns[0].Trim('"');
+                                            stockCode = columns[2].Trim('"');
+                                            companyName = columns[4].Trim('"');
+                                            _stockScriptDictList[3][contractName] = token;
+                                            tokenScriptDictList[3][token] = new[] { contractName, companyName };
+                                            break;
+
+                                        case "NDX":
+                                            contractName = getContractName(columns[2], columns[3], columns[4], columns[5], columns[6]);
+                                            //Console.WriteLine(contractName);
+                                            token = columns[0].Trim('"');
+                                            stockCode = columns[2].Trim('"');
+                                            companyName = columns[29].Trim('"');
+                                            _stockScriptDictList[2][stockCode] = token;
+                                            tokenScriptDictList[2][token] = new[] { stockCode, companyName };
+                                            break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading SecurityMaster.zip: {ex.Message}");
+            }
+            //Console.WriteLine(tokenScriptDictList);
+
             return tokenScriptDictList;
         }
+
+        private string getContractName(string underlying, string productType, string expiryDate,  string strikePrice, string optionType)
+        {
+            string contractName = "";
+            if (productType.ToUpper().Contains("FUT"))
+            {
+                productType = "FUT";
+            } else {
+                productType = "OPT";
+                //strikePrice = ConvertToFormattedRupees(strikePrice);
+                if (optionType.ToUpper().Contains("C"))
+                {
+                    optionType = "CE";
+                }
+                else
+                {
+                    optionType = "PE";
+                }
+
+            }
+
+            contractName = string.Join("-", productType, underlying.Trim('"'), expiryDate.Trim('"'));
+
+            if (productType.ToUpper().Contains("OPT"))
+            {
+                contractName = string.Join("-", contractName, strikePrice.Trim('"'), optionType);
+            }
+                //Console.WriteLine(contractName);
+                return contractName;
+        }
+
+        //static string ConvertToFormattedRupees(string input)
+        //{
+        //    if (decimal.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal value))
+        //    {
+        //        decimal rupees = value / 100;
+        //        return rupees.ToString("G29", CultureInfo.InvariantCulture);
+        //    }
+
+        //    return input; 
+        //}
 
         public async Task<Dictionary<string, object>> wsConnectAsyncOrder()
         {
@@ -330,7 +452,8 @@ namespace Breeze
 
         public async Task<Dictionary<string, object>> subscribeFeedsAsync(string stockToken, string channel)
         {
-
+            //Console.WriteLine(channel);
+            globalInterval = channel;
             await _socketHandlerOhlcv.watchOhlcv(stockToken, channel);
             return new Dictionary<string, object>() {
                 { "Success", "Stock " + stockToken + " subscribed successfully" },
@@ -367,6 +490,7 @@ namespace Breeze
         public async Task<Dictionary<string, object>> subscribeFeedsAsync(string exchangeCode, string stockCode, string productType, string expiryDate, string strikePrice, string right, bool getExchangeQuotes, bool getMarketDepth)
         {
             string[] tokenObject = getStockTokenValue(exchangeCode, stockCode, productType, expiryDate, strikePrice, right, getExchangeQuotes, getMarketDepth);
+            //Console.WriteLine(tokenObject);
             if (tokenObject.Length != 2)
             {
                 return new Dictionary<string, object>{
@@ -479,7 +603,7 @@ namespace Breeze
             if (!string.IsNullOrEmpty(tokenObject[0]))
                 await _socketHandlerOhlcv.unwatchOhlcv(tokenObject[0], interval);
             if (!string.IsNullOrEmpty(tokenObject[1]))
-                await _socketHandlerOhlcv.unwatchOhlcv(tokenObject[1] , interval);
+                await _socketHandlerOhlcv.unwatchOhlcv(tokenObject[1], interval);
             return new Dictionary<string, object>{
                 { "Success", "Stock-Code " + stockCode + " unsubscribed successfully." },
                 { "Status", 200 },
@@ -548,13 +672,19 @@ namespace Breeze
                                 throw new Exception("Rights should either be Put or Call for Product-Type 'Options'.");
                         }
                         if (exchangeCode.ToLower() == "ndx")
-                            _stockScriptDictList[2].TryGetValue(contractDetailValue, out tokenValue);
+                        { _stockScriptDictList[2].TryGetValue(contractDetailValue, out tokenValue); }
                         else if (exchangeCode.ToLower() == "mcx")
-                            _stockScriptDictList[3].TryGetValue(contractDetailValue, out tokenValue);
+                        { _stockScriptDictList[3].TryGetValue(contractDetailValue, out tokenValue); }
                         else if (exchangeCode.ToLower() == "nfo")
+                        {
+                            //Console.WriteLine(contractDetailValue);
                             _stockScriptDictList[4].TryGetValue(contractDetailValue, out tokenValue);
+                        }
                         else if (exchangeCode.ToLower() == "bfo")
+                        {
+                            //Console.WriteLine(contractDetailValue);
                             _stockScriptDictList[5].TryGetValue(contractDetailValue, out tokenValue);
+                        }
                     }
                     if (string.IsNullOrEmpty(tokenValue))
                         throw new Exception("Stock-Code not found.");
@@ -639,6 +769,7 @@ namespace Breeze
                     }
                 });
 
+                //Console.WriteLine(globalInterval);
 
                 if (globalInterval == "1second")
                 {
@@ -721,9 +852,9 @@ namespace Breeze
         RestClient _client = new RestClient("https://api.icicidirect.com/breezeapi/api/v1/");
         private string[] transactionTypeList = { "debit", "credit" };
         private string[] intervalList = { "1minute", "5minute", "30minute", "1day" };
-        private string[] exchangeCodeList = { "nse", "nfo","bfo","bse" };
+        private string[] exchangeCodeList = { "nse", "nfo", "bfo", "bse" };
         private string[] nfoProductTypeList = { "futures", "options", "futureplus", "optionplus" };
-        private string[] productTypeList = { "futures", "options", "futureplus", "optionplus", "cash", "eatm", "margin","mtf" };
+        private string[] productTypeList = { "futures", "options", "futureplus", "optionplus", "cash", "eatm", "margin", "mtf" };
         private string[] rightList = { "call", "put", "others" };
         private string[] actionList = { "buy", "sell" };
         private string[] orderTypeList = { "limit", "market", "stoploss" };
@@ -816,12 +947,12 @@ namespace Breeze
                 response = _client.Execute(request);
                 return JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}\nStackTrace: {ex.StackTrace}");
                 return null;
             }
-            
+
         }
 
         public Dictionary<string, object> getCustomerDetail(string apiSession)
@@ -1793,7 +1924,6 @@ namespace Breeze
             switch (exchange)
             {
                 case "nse":
-                    //Console.WriteLine("idar aaye");
                     url = new Uri("https://traderweb.icicidirect.com/Content/File/txtFile/ScripFile/NSEScripMaster.txt");
                     break;
                 case "bse":
@@ -2373,7 +2503,7 @@ namespace Breeze
             {
                 Dictionary<string, object> candleData = new Dictionary<string, object>()
                 {
-                    {"interval",feedIntervalMap[data[8].ToString()] },
+                    {"interval",feedIntervalMap[dataArray[8].ToString()] },
                     {"exchange_code",dataArray[0]},
                     {"stock_code",dataArray[1] },
                     {"low",dataArray[2]},
