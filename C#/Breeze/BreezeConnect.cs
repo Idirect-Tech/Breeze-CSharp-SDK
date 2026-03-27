@@ -857,7 +857,7 @@ namespace Breeze
         private string[] productTypeList = { "futures", "options", "futureplus", "optionplus", "cash", "eatm", "margin", "mtf" };
         private string[] rightList = { "call", "put", "others" };
         private string[] actionList = { "buy", "sell" };
-        private string[] orderTypeList = { "limit", "market", "stoploss" };
+        private string[] orderTypeList = { "limit", "stoploss" };
         private string[] validityList = { "day", "ioc", "vtc" };
 
         private bool checkList(string[] listName, string valueToCheck)
@@ -1262,7 +1262,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "orderType should be either 'limit', 'market', or 'stoploss'" }
+                    { "Error", "orderType should be either 'limit', 'stoploss'" }
                 };
             else if (string.IsNullOrEmpty(quantity))
                 return new Dictionary<string, object>{
@@ -1556,7 +1556,7 @@ namespace Breeze
                 return new Dictionary<string, object>{
                     { "Success", ""},
                     { "Status", 500},
-                    { "Error", "orderType should be either 'limit', 'market', or 'stoploss'" }
+                    { "Error", "orderType should be either 'limit', 'stoploss'" }
                 };
             else if (!string.IsNullOrEmpty(validity) && !checkList(validityList, validity))
                 return new Dictionary<string, object>{
@@ -2117,7 +2117,7 @@ namespace Breeze
             returnDictionary.Add("limitMarketFlag", new Dictionary<string, string>()
             {
                 {"L", "Limit"},
-                {"M", "Market"},
+                // {"M", "Market"},
                 {"S", "StopLoss"}
             });
             returnDictionary.Add("orderType", new Dictionary<string, string>()
