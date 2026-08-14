@@ -1,0 +1,12 @@
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\bin\Debug\netstandard2.0\BreezeConnect.deps.json
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\bin\Debug\netstandard2.0\BreezeConnect.dll
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\bin\Debug\netstandard2.0\BreezeConnect.pdb
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\bin\Debug\netstandard2.0\BreezeConnect.xml
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.csproj.AssemblyReference.cache
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.AssemblyInfoInputs.cache
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.AssemblyInfo.cs
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.csproj.CoreCompileInputs.cache
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.dll
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.xml
+C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\netstandard2.0\BreezeConnect.pdb
