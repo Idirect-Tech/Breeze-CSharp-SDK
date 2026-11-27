@@ -825,8 +825,8 @@ namespace Breeze
         public Dictionary<string, object> getPortfolioPositions() { return _apiHandler.getPortfolioPositions(); }
         public Dictionary<string, object> getQuotes(string stockCode, string exchangeCode, string expiryDate, string productType, string right, string strikePrice) { return _apiHandler.getQuotes(stockCode, exchangeCode, expiryDate, productType, right, strikePrice); }
         public Dictionary<string, object> getOptionChainQuotes(string stockCode, string exchangeCode, string expiryDate, string productType, string right, string strikePrice) { return _apiHandler.getOptionChainQuotes(stockCode, exchangeCode, expiryDate, productType, right, strikePrice); }
-        public Dictionary<string, object> squareOff(string sourceFlag, string stockCode, string exchangeCode, string quantity, string price, string action, string orderType, string validity, string stoploss, string disclosedQuantity, string protectionPercentage, string settlementId, string marginAmount, string openQuantity, string coverQuantity, string productType, string expiryDate, string right, string strikePrice, string validityDate, string tradePassword, string aliasName)
-        { return _apiHandler.squareOff(sourceFlag, stockCode, exchangeCode, quantity, price, action, orderType, validity, stoploss, disclosedQuantity, protectionPercentage, settlementId, marginAmount, openQuantity, coverQuantity, productType, expiryDate, right, strikePrice, validityDate, tradePassword, aliasName); }
+        public Dictionary<string, object> squareOff(string sourceFlag, string stockCode, string exchangeCode, string quantity, string price, string action, string orderType, string validity, string stoploss, string disclosedQuantity, string protectionPercentage, string settlementId, string marginAmount, string openQuantity, string coverQuantity, string productType, string expiryDate, string right, string strikePrice, string validityDate, string tradePassword, string aliasName, string orderId = null)
+        { return _apiHandler.squareOff(sourceFlag, stockCode, exchangeCode, quantity, price, action, orderType, validity, stoploss, disclosedQuantity, protectionPercentage, settlementId, marginAmount, openQuantity, coverQuantity, productType, expiryDate, right, strikePrice, validityDate, tradePassword, aliasName, orderId); }
         public Dictionary<string, object> getTradeList(string fromDate, string toDate, string exchangeCode, string productType, string action, string stockCode) { return _apiHandler.getTradeList(fromDate, toDate, exchangeCode, productType, action, stockCode); }
 
         public Dictionary<string, object> getTradeDetail(string exchangeCode, string orderId) { return _apiHandler.getTradeDetail(exchangeCode, orderId); }
@@ -857,8 +857,9 @@ namespace Breeze
         private string[] productTypeList = { "futures", "options", "futureplus", "optionplus", "cash", "eatm", "margin", "mtf" };
         private string[] rightList = { "call", "put", "others" };
         private string[] actionList = { "buy", "sell" };
-        private string[] orderTypeList = { "limit", "stoploss" };
+        private string[] orderTypeList = { "limit", "stoploss", "market" };
         private string[] validityList = { "day", "ioc", "vtc" };
+        private static readonly string[] AGGRESSIVE_LIMIT_INDICES = { "NIFTY", "CNXBAN", "NIFSEL", "NIFFIN", "BSESEN", "BANKEX" };
 
         private bool checkList(string[] listName, string valueToCheck)
         {
@@ -1208,6 +1209,101 @@ namespace Breeze
             return response;
         }
 
+        private decimal calculateTickSize(decimal ltp, string stockCode, string product, string exchangeCode)
+        {
+            string sc = (stockCode ?? "").ToUpper();
+            string p = (product ?? "").ToLower();
+            string ec = (exchangeCode ?? "").ToUpper();
+
+            if (ec == "NSE" || ec == "NFO")
+            {
+                if (Array.IndexOf(AGGRESSIVE_LIMIT_INDICES, sc) >= 0)
+                {
+                    if (p == "options") return 0.05m;
+                    if (p == "futures")
+                    {
+                        if (ltp < 15000m) return 0.05m;
+                        if (ltp < 30000m) return 0.10m;
+                        return 0.20m;
+                    }
+                }
+                else
+                {
+                    if (p == "futures" || p == "cash")
+                    {
+                        if (ltp < 250m) return 0.01m;
+                        if (ltp < 1000m) return 0.05m;
+                        if (ltp < 5000m) return 0.10m;
+                        if (ltp < 10000m) return 0.50m;
+                        if (ltp < 20000m) return 1m;
+                        return 5m;
+                    }
+                    if (p == "options") return 0.05m;
+                }
+            }
+            else if (ec == "BSE" || ec == "BFO")
+            {
+                if (Array.IndexOf(AGGRESSIVE_LIMIT_INDICES, sc) >= 0) return 0.05m;
+                return ltp <= 100m ? 0.01m : 0.05m;
+            }
+
+            return 0m;
+        }
+
+        private (decimal? price, string error) getAggressiveLimitPrice(string stockCode, string exchangeCode, string productType, string action, string right, string expiryDate, string strikePrice)
+        {
+            try
+            {
+                var quotes = getQuotes(stockCode, exchangeCode, expiryDate, productType, right, strikePrice);
+                if (quotes == null || !quotes.TryGetValue("Success", out var successObj) || successObj == null)
+                    return (null, "Quotes not available");
+
+                if (!(successObj is JsonElement successEl) || successEl.ValueKind != JsonValueKind.Array || successEl.GetArrayLength() == 0)
+                    return (null, "Quotes not available");
+
+                int idx = exchangeCode != null && exchangeCode.Equals("bse", StringComparison.OrdinalIgnoreCase) && successEl.GetArrayLength() > 1 ? 1 : 0;
+                var q = successEl[idx];
+
+                decimal ltp = q.GetProperty("ltp").GetDecimal();
+                decimal upperCkt = q.GetProperty("upper_circuit").GetDecimal();
+                decimal lowerCkt = q.GetProperty("lower_circuit").GetDecimal();
+                string respExchange = q.GetProperty("exchange_code").GetString();
+
+                decimal percent, minDiff;
+                switch ((productType ?? "").ToLower())
+                {
+                    case "options": percent = 10m; minDiff = 5m; break;
+                    case "futures": percent = 1.5m; minDiff = 0.05m; break;
+                    case "cash": percent = 3m; minDiff = 0.05m; break;
+                    default: return (null, "Invalid product");
+                }
+
+                decimal percentPrice = ltp * percent / 100m;
+                decimal offset = percentPrice >= minDiff ? percentPrice : minDiff;
+
+                decimal raw;
+                if (action != null && action.Equals("buy", StringComparison.OrdinalIgnoreCase))
+                    raw = ltp + offset;
+                else if (action != null && action.Equals("sell", StringComparison.OrdinalIgnoreCase))
+                    raw = ltp - offset;
+                else
+                    return (null, "Invalid action");
+
+                decimal dprPrice = Math.Max(lowerCkt, Math.Min(raw, upperCkt));
+
+                decimal tickSize = calculateTickSize(ltp, stockCode, productType, respExchange);
+                if (tickSize <= 0m)
+                    return (null, "Could not determine tick size");
+
+                decimal finalPrice = Math.Round(dprPrice / tickSize) * tickSize;
+                return (finalPrice, null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex.Message);
+            }
+        }
+
         public Dictionary<string, object> placeOrder(string stockCode, string exchangeCode, string productType, string action, string orderType, string stoploss, string quantity, string price, string validity, string validityDate, string disclosedQuantity, string expiryDate, string right, string strikePrice, string userRemark, string orderTypeFresh, string orderRateFresh)
         {
             if (string.IsNullOrEmpty(stockCode))
@@ -1288,6 +1384,20 @@ namespace Breeze
                     { "Status", 500},
                     { "Error", "right should be either 'call', 'put', or 'others'" }
                 };
+
+            if (!string.IsNullOrEmpty(orderType) && orderType.Equals("market", StringComparison.OrdinalIgnoreCase))
+            {
+                var (aggPrice, aggErr) = getAggressiveLimitPrice(stockCode, exchangeCode, productType, action, right, expiryDate, strikePrice);
+                if (aggErr != null)
+                    return new Dictionary<string, object>{
+                        { "Success", ""},
+                        { "Status", 500},
+                        { "Error", aggErr }
+                    };
+                price = aggPrice.Value.ToString(CultureInfo.InvariantCulture);
+                orderType = "limit";
+            }
+
             var requestBody = new Dictionary<string, object> {
                 {"stock_code", stockCode},
                 {"exchange_code", exchangeCode},
@@ -1564,6 +1674,53 @@ namespace Breeze
                     { "Status", 500},
                     { "Error", "validity should be either 'day', 'ioc', or 'vtc'" }
                 };
+
+            var orderData = getOrderDetail(exchangeCode, orderId);
+            if (orderData == null || !orderData.TryGetValue("Success", out var orderSuccessObj) || orderSuccessObj == null
+                || !(orderSuccessObj is JsonElement orderSuccessEl)
+                || orderSuccessEl.ValueKind != JsonValueKind.Array || orderSuccessEl.GetArrayLength() == 0)
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "Order not found" }
+                };
+
+            var orderEl = orderSuccessEl[0];
+
+            string status = orderEl.TryGetProperty("status", out var statusProp) && statusProp.ValueKind == JsonValueKind.String
+                ? (statusProp.GetString() ?? "").ToLower() : "";
+            if (status != "ordered" && status != "requested" && status != "partially executed")
+                return new Dictionary<string, object>{
+                    { "Success", ""},
+                    { "Status", 500},
+                    { "Error", "Order has already been executed and cannot be modified." }
+                };
+
+            if (!string.IsNullOrEmpty(orderType) && orderType.Equals("market", StringComparison.OrdinalIgnoreCase))
+            {
+                string stockCode = orderEl.TryGetProperty("stock_code", out var scP) && scP.ValueKind == JsonValueKind.String ? scP.GetString() : "";
+                string product = orderEl.TryGetProperty("product_type", out var pP) && pP.ValueKind == JsonValueKind.String ? pP.GetString() : "";
+                string action = orderEl.TryGetProperty("action", out var aP) && aP.ValueKind == JsonValueKind.String ? aP.GetString() : "";
+                string expiryDate = orderEl.TryGetProperty("expiry_date", out var eP) && eP.ValueKind == JsonValueKind.String ? eP.GetString() : "";
+                string right = orderEl.TryGetProperty("right", out var rP) && rP.ValueKind == JsonValueKind.String ? rP.GetString() : "";
+                string strikePrice = "";
+                if (orderEl.TryGetProperty("strike_price", out var spP))
+                {
+                    if (spP.ValueKind == JsonValueKind.String) strikePrice = spP.GetString();
+                    else if (spP.ValueKind == JsonValueKind.Number) strikePrice = spP.GetDecimal().ToString(CultureInfo.InvariantCulture);
+                }
+
+                var (aggPrice, aggErr) = getAggressiveLimitPrice(stockCode, exchangeCode, product, action, right, expiryDate, strikePrice);
+                if (aggErr != null)
+                    return new Dictionary<string, object>{
+                        { "Success", ""},
+                        { "Status", 500},
+                        { "Error", aggErr }
+                    };
+                price = aggPrice.Value.ToString(CultureInfo.InvariantCulture);
+                orderType = "limit";
+            }
+
             var requestBody = new Dictionary<string, object> {
                 {"order_id", orderId},
                 {"exchange_code", exchangeCode}
@@ -1758,8 +1915,39 @@ namespace Breeze
             return response;
         }
 
-        public Dictionary<string, object> squareOff(string sourceFlag, string stockCode, string exchangeCode, string quantity, string price, string action, string orderType, string validity, string stoploss, string disclosedQuantity, string protectionPercentage, string settlementId, string marginAmount, string openQuantity, string coverQuantity, string productType, string expiryDate, string right, string strikePrice, string validityDate, string tradePassword, string aliasName)
+        public Dictionary<string, object> squareOff(string sourceFlag, string stockCode, string exchangeCode, string quantity, string price, string action, string orderType, string validity, string stoploss, string disclosedQuantity, string protectionPercentage, string settlementId, string marginAmount, string openQuantity, string coverQuantity, string productType, string expiryDate, string right, string strikePrice, string validityDate, string tradePassword, string aliasName, string orderId = null)
         {
+            if (!string.IsNullOrEmpty(orderId))
+            {
+                var orderData = getOrderDetail(exchangeCode, orderId);
+                if (orderData == null || !orderData.TryGetValue("Success", out var soSuccessObj) || soSuccessObj == null
+                    || !(soSuccessObj is JsonElement soSuccessEl)
+                    || soSuccessEl.ValueKind != JsonValueKind.Array || soSuccessEl.GetArrayLength() == 0)
+                    return new Dictionary<string, object>{
+                        { "Success", ""},
+                        { "Status", 500},
+                        { "Error", "Order not found" }
+                    };
+
+                var soOrderEl = soSuccessEl[0];
+                string originalAction = soOrderEl.TryGetProperty("action", out var soAP) && soAP.ValueKind == JsonValueKind.String
+                    ? (soAP.GetString() ?? "").ToLower() : "";
+                action = originalAction == "buy" ? "sell" : "buy";
+            }
+
+            if (!string.IsNullOrEmpty(orderType) && orderType.Equals("market", StringComparison.OrdinalIgnoreCase))
+            {
+                var (aggPrice, aggErr) = getAggressiveLimitPrice(stockCode, exchangeCode, productType, action, right, expiryDate, strikePrice);
+                if (aggErr != null)
+                    return new Dictionary<string, object>{
+                        { "Success", ""},
+                        { "Status", 500},
+                        { "Error", aggErr }
+                    };
+                price = aggPrice.Value.ToString(CultureInfo.InvariantCulture);
+                orderType = "limit";
+            }
+
             var response = makeRequest("POST", "squareoff", new Dictionary<string, object> {
                 {"source_flag", sourceFlag},
                 {"stock_code", stockCode},
@@ -2889,17 +3077,17 @@ namespace Breeze
                     orderData = Miscellaneous.tryAddToDictionary("modificationOrCancelFlag", data[35], orderData);           //Modification or Cancel Flag
                     orderData = Miscellaneous.tryAddToDictionary("tradeDate", data[36], orderData);                          //Trade Date
                     orderData = Miscellaneous.tryAddToDictionary("acknowledgeNumber", data[37], orderData);                  //Acknowledgement Number
-                    orderData = Miscellaneous.tryAddToDictionary("stopLossOrderReference", data[37], orderData);             //Stop Loss Order Reference
-                    orderData = Miscellaneous.tryAddToDictionary("totalAmountBlocked", data[38], orderData);                 // Total Amount Blocked
-                    orderData = Miscellaneous.tryAddToDictionary("averageExecutedRate", data[39], orderData);                //Average Executed Rate
-                    orderData = Miscellaneous.tryAddToDictionary("cancelFlag", data[40], orderData);                         //Cancel Flag
-                    orderData = Miscellaneous.tryAddToDictionary("squareOffMarket", data[41], orderData);                    //SquareOff Market
-                    orderData = Miscellaneous.tryAddToDictionary("quickExitFlag", data[42], orderData);                      //Quick Exit Flag
-                    orderData = Miscellaneous.tryAddToDictionary("stopValidTillDateFlag", data[43], orderData);              //Stop Valid till Date Flag
-                    orderData = Miscellaneous.tryAddToDictionary("priceImprovementFlag", data[44], orderData);               //Price Improvement Flag
-                    orderData = Miscellaneous.tryAddToDictionary("conversionImprovementFlag", data[45], orderData);          //Conversion Improvement Flag
-                    orderData = Miscellaneous.tryAddToDictionary("trailUpdateCondition", data[45], orderData);               //Trail Update Condition
-                    orderData = Miscellaneous.tryAddToDictionary("systemPartnerCode", data[46], orderData);                  //System Partner Code
+                    orderData = Miscellaneous.tryAddToDictionary("stopLossOrderReference", data[38], orderData);             //Stop Loss Order Reference
+                    orderData = Miscellaneous.tryAddToDictionary("totalAmountBlocked", data[39], orderData);                 // Total Amount Blocked
+                    orderData = Miscellaneous.tryAddToDictionary("averageExecutedRate", data[40], orderData);                //Average Executed Rate
+                    orderData = Miscellaneous.tryAddToDictionary("cancelFlag", data[41], orderData);                         //Cancel Flag
+                    orderData = Miscellaneous.tryAddToDictionary("squareOffMarket", data[42], orderData);                    //SquareOff Market
+                    orderData = Miscellaneous.tryAddToDictionary("quickExitFlag", data[43], orderData);                      //Quick Exit Flag
+                    orderData = Miscellaneous.tryAddToDictionary("stopValidTillDateFlag", data[44], orderData);              //Stop Valid till Date Flag
+                    orderData = Miscellaneous.tryAddToDictionary("priceImprovementFlag", data[45], orderData);               //Price Improvement Flag
+                    orderData = Miscellaneous.tryAddToDictionary("conversionImprovementFlag", data[46], orderData);          //Conversion Improvement Flag
+                    orderData = Miscellaneous.tryAddToDictionary("trailUpdateCondition", data[47], orderData);               //Trail Update Condition
+                    orderData = Miscellaneous.tryAddToDictionary("systemPartnerCode", data[48], orderData);                  //System Partner Code
                 }
                 return orderData;
             }

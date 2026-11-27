@@ -22,3 +22,12 @@ C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\net472\BreezeConnect.csp
 C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\net472\BreezeConnect.dll
 C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\net472\BreezeConnect.xml
 C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\obj\Debug\net472\BreezeConnect.pdb
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.csproj.AssemblyReference.cache
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.AssemblyInfoInputs.cache
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.AssemblyInfo.cs
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.csproj.CoreCompileInputs.cache
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.sourcelink.json
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.dll
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.xml
+C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\obj\Debug\net472\BreezeConnect.pdb

@@ -1,3 +1,8 @@
 is_global = true
 build_property.RootNamespace = BreezeConnect
-build_property.ProjectDir = C:\Users\SHRIKANT\Documents\C#(UAT)\C#\Breeze\
+build_property.ProjectDir = C:\Users\Team\Desktop\Breeze\oneture\Breeze\.Net\git\AggressiveLimit\Breeze-CSharp-SDK\C#\Breeze\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 
